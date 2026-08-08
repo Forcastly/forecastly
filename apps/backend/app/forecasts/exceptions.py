@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-from app.core.exceptions import ForecastlyError, NotFoundError
+from app.core.exceptions import ForecastlyError, NotFoundError, ValidationError
 
 
 class ForecastNotFoundError(NotFoundError):
     code = "forecast_not_found"
     message = "No forecast has been generated for this location."
+
+
+class InvalidForecastCursorError(ValidationError):
+    code = "invalid_cursor"
+    message = "The pagination cursor is invalid."
 
 
 class InsufficientForecastHistoryError(ForecastlyError):

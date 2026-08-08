@@ -17,6 +17,7 @@ from app.forecasts.schemas import (
     ForecastDay,
     ForecastDayItem,
     ForecastPointSchema,
+    ForecastRunListResponse,
     ForecastRunSchema,
     GenerateForecastResponse,
     LatestForecastResponse,
@@ -81,6 +82,39 @@ async def latest_forecast(
     return LatestForecastResponse(
         run=ForecastRunSchema.model_validate(run),
         days=_group_by_day(forecasts),
+    )
+
+
+@router.get(
+    "/locations/{location_id}/forecast-runs",
+    response_model=ForecastRunListResponse,
+)
+async def list_forecast_runs(
+    location_id: UUID,
+    user: CurrentUser,
+    service: ForecastServiceDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    cursor: Annotated[str | None, Query()] = None,
+) -> ForecastRunListResponse:
+    runs, next_cursor = await service.list_runs(
+        user=user, location_id=location_id, limit=limit, cursor=cursor
+    )
+    return ForecastRunListResponse(
+        items=[ForecastRunSchema.model_validate(run) for run in runs],
+        next_cursor=next_cursor,
+    )
+
+
+@router.get("/forecast-runs/{forecast_run_id}", response_model=GenerateForecastResponse)
+async def get_forecast_run(
+    forecast_run_id: UUID,
+    user: CurrentUser,
+    service: ForecastServiceDep,
+) -> GenerateForecastResponse:
+    run, forecasts = await service.get_run(user=user, forecast_run_id=forecast_run_id)
+    return GenerateForecastResponse(
+        run=ForecastRunSchema.model_validate(run),
+        forecasts=[ForecastPointSchema.model_validate(f) for f in forecasts],
     )
 
 

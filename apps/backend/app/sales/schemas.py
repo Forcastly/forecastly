@@ -74,3 +74,11 @@ class SaleResponse(BaseModel):
 class SalesListResponse(BaseModel):
     items: list[SaleResponse]
     next_cursor: str | None
+
+
+class SalesSummaryResponse(BaseModel):
+    start_date: date | None
+    end_date: date | None
+    total_quantity: int
+    total_revenue: Decimal | None
+    days_with_data: int

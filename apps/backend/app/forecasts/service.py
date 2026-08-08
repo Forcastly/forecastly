@@ -7,6 +7,9 @@ service owns orchestration and persistence. See ``docs/FORECASTING.md`` §17–2
 
 from __future__ import annotations
 
+import base64
+import binascii
+import json
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -19,11 +22,13 @@ from app.forecasts.engine import HORIZON_DAYS, ForecastEngine, HistoricalObserva
 from app.forecasts.exceptions import (
     ForecastNotFoundError,
     InsufficientForecastHistoryError,
+    InvalidForecastCursorError,
     StaleSalesDataError,
 )
 from app.forecasts.metrics import AccuracyMetrics, ForecastActualPair, compute_metrics
 from app.forecasts.models import Forecast, ForecastRun
-from app.forecasts.repository import ForecastRepository
+from app.forecasts.repository import ForecastRepository, ForecastRunCursor
+from app.locations.exceptions import LocationNotFoundError
 from app.locations.models import Location
 from app.locations.service import LocationService
 from app.sales.csv import normalize_item_name
@@ -35,6 +40,20 @@ STALE_AFTER_DAYS = 7
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def encode_run_cursor(cursor: ForecastRunCursor) -> str:
+    generated_at, run_id = cursor
+    payload = json.dumps({"g": generated_at.isoformat(), "i": str(run_id)})
+    return base64.urlsafe_b64encode(payload.encode()).decode()
+
+
+def decode_run_cursor(cursor: str) -> ForecastRunCursor:
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(cursor.encode()))
+        return datetime.fromisoformat(payload["g"]), UUID(payload["i"])
+    except (ValueError, KeyError, binascii.Error) as exc:
+        raise InvalidForecastCursorError() from exc
 
 
 class ForecastService:
@@ -125,6 +144,38 @@ class ForecastService:
         run = await self.repository.latest_run(location.id)
         if run is None:
             raise ForecastNotFoundError()
+        forecasts = await self.repository.list_forecasts_for_run(run.id)
+        return run, forecasts
+
+    async def list_runs(
+        self,
+        *,
+        user: User,
+        location_id: UUID,
+        limit: int,
+        cursor: str | None = None,
+    ) -> tuple[list[ForecastRun], str | None]:
+        location = await self.locations.get(user, location_id)
+        decoded = decode_run_cursor(cursor) if cursor else None
+        runs, next_cursor = await self.repository.list_runs(
+            location_id=location.id, limit=limit, cursor=decoded
+        )
+        return runs, (encode_run_cursor(next_cursor) if next_cursor else None)
+
+    async def get_run(
+        self,
+        *,
+        user: User,
+        forecast_run_id: UUID,
+    ) -> tuple[ForecastRun, list[Forecast]]:
+        run = await self.repository.get_run(forecast_run_id)
+        if run is None:
+            raise ForecastNotFoundError()
+        # Authorize via the owning location; hide inaccessible runs as not-found.
+        try:
+            await self.locations.get(user, run.location_id)
+        except LocationNotFoundError as exc:
+            raise ForecastNotFoundError() from exc
         forecasts = await self.repository.list_forecasts_for_run(run.id)
         return run, forecasts
 

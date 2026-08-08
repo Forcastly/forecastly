@@ -11,6 +11,7 @@ import base64
 import binascii
 import json
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
@@ -18,6 +19,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.forecasts.champions import PRODUCTION_MODEL_VERSION, select_item_models
 from app.forecasts.engine import HORIZON_DAYS, ForecastEngine, HistoricalObservation
 from app.forecasts.exceptions import (
     ForecastNotFoundError,
@@ -36,6 +38,15 @@ from app.sales.repository import SalesRepository
 from app.users.models import User
 
 STALE_AFTER_DAYS = 7
+
+
+@dataclass(frozen=True, slots=True)
+class BacktestResult:
+    as_of: date
+    start_date: date
+    end_date: date
+    window_days: int
+    metrics: AccuracyMetrics
 
 
 def _now() -> datetime:
@@ -104,9 +115,14 @@ class ForecastService:
 
         forecast_start = history_end + timedelta(days=1)
 
+        # Pick a champion model per item via the hybrid tournament. Falls back to
+        # the weekday-average engine per item when the champion can't forecast it
+        # (cold start), so thin-history locations never regress.
+        _, item_models = select_item_models(history_by_item)
+
         run = await self.repository.create_run(
             location_id=location.id,
-            model_version=self.engine.model_version,
+            model_version=PRODUCTION_MODEL_VERSION,
             history_start_date=history_start,
             history_end_date=history_end,
             horizon_days=HORIZON_DAYS,
@@ -115,7 +131,15 @@ class ForecastService:
 
         forecasts: list[Forecast] = []
         for normalized, history in history_by_item.items():
-            for point in self.engine.generate(history, forecast_start, HORIZON_DAYS):
+            champion = item_models.get(normalized)
+            points = champion.predict(history, forecast_start, HORIZON_DAYS) if champion else []
+            model_name = champion.name if champion else self.engine.model_version
+            # Fall back when the champion can't cover the full horizon (e.g. a
+            # seasonal model missing a weekday), so every item gets all H days.
+            if len(points) < HORIZON_DAYS:
+                points = self.engine.generate(history, forecast_start, HORIZON_DAYS)
+                model_name = self.engine.model_version
+            for point in points:
                 forecasts.append(
                     Forecast(
                         forecast_run_id=run.id,
@@ -124,6 +148,7 @@ class ForecastService:
                         item_name=display_name[normalized],
                         item_name_normalized=normalized,
                         predicted_quantity=point.predicted_quantity,
+                        model_name=model_name,
                     )
                 )
 
@@ -203,6 +228,58 @@ class ForecastService:
                 ForecastActualPair(predicted=predicted, actual=Decimal(actual))
                 for predicted, actual in pairs
             ]
+        )
+
+    async def backtest(
+        self,
+        *,
+        user: User,
+        location_id: UUID,
+        window_days: int = 7,
+    ) -> BacktestResult:
+        """Hold out the most recent ``window_days`` and score the model on them.
+
+        Forecasts those days using only earlier history (as of the cutoff), then
+        compares to the actual sales already present. Nothing is persisted — this
+        is on-demand validation, separate from operational forecast runs.
+        """
+        location = await self.locations.get(user, location_id)
+        observations = await self.sales.list_observations(location.id)
+        if not observations:
+            raise InsufficientForecastHistoryError()
+
+        latest = max(o.business_date for o in observations)
+        as_of = latest - timedelta(days=window_days)
+        forecast_start = as_of + timedelta(days=1)
+
+        history_by_item: dict[str, list[HistoricalObservation]] = defaultdict(list)
+        actuals: dict[tuple[date, str], int] = {}
+        for obs in observations:
+            if obs.business_date <= as_of:
+                history_by_item[obs.item_name_normalized].append(
+                    HistoricalObservation(obs.business_date, obs.quantity)
+                )
+            elif obs.business_date <= latest:
+                actuals[(obs.business_date, obs.item_name_normalized)] = obs.quantity
+
+        pairs: list[ForecastActualPair] = []
+        for normalized, history in history_by_item.items():
+            for point in self.engine.generate(history, forecast_start, window_days):
+                actual = actuals.get((point.forecast_date, normalized))
+                if actual is not None:
+                    pairs.append(
+                        ForecastActualPair(
+                            predicted=point.predicted_quantity,
+                            actual=Decimal(actual),
+                        )
+                    )
+
+        return BacktestResult(
+            as_of=as_of,
+            start_date=forecast_start,
+            end_date=latest,
+            window_days=window_days,
+            metrics=compute_metrics(pairs),
         )
 
     @staticmethod

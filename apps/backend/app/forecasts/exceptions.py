@@ -10,6 +10,11 @@ class ForecastNotFoundError(NotFoundError):
     message = "No forecast has been generated for this location."
 
 
+class ModelEvaluationNotFoundError(NotFoundError):
+    code = "model_evaluation_not_found"
+    message = "No model evaluation has been run for this location."
+
+
 class InvalidForecastCursorError(ValidationError):
     code = "invalid_cursor"
     message = "The pagination cursor is invalid."

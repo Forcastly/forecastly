@@ -14,7 +14,9 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - forecastly_pgdata:/var/lib/postgresql/data
+      # postgres:18 expects the mount at /var/lib/postgresql (data lives in a
+      # versioned subdirectory) to support in-place pg_upgrade.
+      - forecastly_pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-forecastly} -d ${POSTGRES_DB:-forecastly}"]
       interval: 5s

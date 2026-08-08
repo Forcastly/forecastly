@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.forecasts.models import Forecast, ForecastRun
+from app.sales.models import Sale
 
 
 class ForecastRepository:
@@ -57,3 +59,55 @@ class ForecastRepository:
             .order_by(Forecast.forecast_date.asc(), Forecast.item_name.asc())
         )
         return list(await self.session.scalars(stmt))
+
+    async def forecast_actual_pairs(
+        self,
+        *,
+        location_id: UUID,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        item_normalized: str | None = None,
+        forecast_run_id: UUID | None = None,
+    ) -> list[tuple[Decimal, int]]:
+        """Predicted vs actual pairs for evaluation.
+
+        For each (forecast_date, item) the most recent run's prediction is used,
+        joined to the actual sale for that date. Only dates with a known actual
+        are returned, so missing actuals are excluded (not treated as zero).
+        """
+        predicted = (
+            select(
+                Forecast.forecast_date.label("forecast_date"),
+                Forecast.item_name_normalized.label("item"),
+                Forecast.predicted_quantity.label("predicted"),
+            )
+            .join(ForecastRun, Forecast.forecast_run_id == ForecastRun.id)
+            .where(Forecast.location_id == location_id)
+        )
+        if start_date is not None:
+            predicted = predicted.where(Forecast.forecast_date >= start_date)
+        if end_date is not None:
+            predicted = predicted.where(Forecast.forecast_date <= end_date)
+        if item_normalized is not None:
+            predicted = predicted.where(Forecast.item_name_normalized == item_normalized)
+        if forecast_run_id is not None:
+            predicted = predicted.where(ForecastRun.id == forecast_run_id)
+
+        # DISTINCT ON keeps the newest prediction per (date, item).
+        predicted = predicted.order_by(
+            Forecast.forecast_date,
+            Forecast.item_name_normalized,
+            ForecastRun.generated_at.desc(),
+        ).distinct(Forecast.forecast_date, Forecast.item_name_normalized)
+        latest = predicted.subquery()
+
+        stmt = select(latest.c.predicted, Sale.quantity).join(
+            Sale,
+            and_(
+                Sale.location_id == location_id,
+                Sale.business_date == latest.c.forecast_date,
+                Sale.item_name_normalized == latest.c.item,
+            ),
+        )
+        result = await self.session.execute(stmt)
+        return [(row.predicted, row.quantity) for row in result]

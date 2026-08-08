@@ -9,6 +9,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 
 from app.core.dependencies import SessionDep, SettingsDep
+from app.forecasts.repository import ForecastRepository
+from app.forecasts.service import ForecastService
 from app.locations.repository import LocationRepository
 from app.locations.service import LocationService
 from app.restaurants.repository import RestaurantRepository
@@ -29,7 +31,13 @@ router = APIRouter(tags=["sales"])
 
 def get_sales_service(session: SessionDep) -> SalesService:
     locations = LocationService(LocationRepository(session), RestaurantRepository(session))
-    return SalesService(SalesRepository(session), SalesImportRepository(session), locations)
+    forecasts = ForecastService(ForecastRepository(session), SalesRepository(session), locations)
+    return SalesService(
+        SalesRepository(session),
+        SalesImportRepository(session),
+        locations,
+        forecasts,
+    )
 
 
 SalesServiceDep = Annotated[SalesService, Depends(get_sales_service)]
@@ -54,14 +62,13 @@ async def upload_sales_csv(
     if len(content) > settings.max_upload_bytes:
         raise SalesFileTooLargeError()
 
-    sales_import = await service.import_csv(
+    sales_import, forecast_generated = await service.import_csv(
         user=user,
         location_id=location_id,
         filename=file.filename or "upload.csv",
         content=content,
     )
-    # Forecast auto-generation is wired once the forecasts domain exists.
-    return SalesImportResponse.from_entity(sales_import, forecast_generated=False)
+    return SalesImportResponse.from_entity(sales_import, forecast_generated=forecast_generated)
 
 
 @router.get(

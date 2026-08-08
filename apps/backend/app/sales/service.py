@@ -17,6 +17,11 @@ from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 
+from app.forecasts.exceptions import (
+    InsufficientForecastHistoryError,
+    StaleSalesDataError,
+)
+from app.forecasts.service import ForecastService
 from app.locations.service import LocationService
 from app.sales.csv import CsvValidationError, normalize_item_name, parse_sales_csv
 from app.sales.exceptions import (
@@ -57,10 +62,12 @@ class SalesService:
         sales: SalesRepository,
         imports: SalesImportRepository,
         locations: LocationService,
+        forecasts: ForecastService,
     ) -> None:
         self.sales = sales
         self.imports = imports
         self.locations = locations
+        self.forecasts = forecasts
 
     async def import_csv(
         self,
@@ -69,7 +76,7 @@ class SalesService:
         location_id: UUID,
         filename: str,
         content: bytes,
-    ) -> SalesImport:
+    ) -> tuple[SalesImport, bool]:
         location = await self.locations.get(user, location_id)  # 404 if inaccessible
         content_hash = hashlib.sha256(content).hexdigest()
 
@@ -107,7 +114,22 @@ class SalesService:
             raise DuplicateSalesImportError() from exc
 
         await self.imports.session.refresh(sales_import)
-        return sales_import
+
+        # Regenerate the forecast from the new data. The stale-data rule is a
+        # customer-facing guard on manual generation, not on auto-run, so it is
+        # disabled here; insufficient history simply yields no forecast.
+        forecast_generated = False
+        try:
+            await self.forecasts.generate(
+                user=user,
+                location_id=location.id,
+                enforce_stale=False,
+            )
+            forecast_generated = True
+        except InsufficientForecastHistoryError, StaleSalesDataError:
+            forecast_generated = False
+
+        return sales_import, forecast_generated
 
     async def _record_failed(
         self,

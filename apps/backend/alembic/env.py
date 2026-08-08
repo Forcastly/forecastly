@@ -20,6 +20,7 @@ from app.core.config import get_settings
 from app.core.db.base import Base
 
 # Side-effect imports: register domain models on Base.metadata for autogenerate.
+from app.forecasts import models as _forecast_models  # noqa: F401
 from app.locations import models as _location_models  # noqa: F401
 from app.restaurants import models as _restaurant_models  # noqa: F401
 from app.sales import models as _sales_models  # noqa: F401

@@ -1,0 +1,27 @@
+# Forecastly monorepo — shared local infrastructure.
+# Run from the repo root:  docker compose -f infra/docker-compose.yml up -d
+# Stable project name so containers/volumes are consistent regardless of cwd.
+name: forecastly
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: forecastly-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-forecastly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-forecastly}
+      POSTGRES_DB: ${POSTGRES_DB:-forecastly}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - forecastly_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-forecastly} -d ${POSTGRES_DB:-forecastly}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Future monorepo services (backend, frontend) can be added here.
+
+volumes:
+  forecastly_pgdata:

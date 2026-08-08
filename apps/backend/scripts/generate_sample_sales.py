@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
-"""Generate realistic sample restaurant sales as a Forecastly CSV.
+"""Generate sample restaurant sales as a Forecastly CSV.
 
 Produces one row per (business_date, item) in the documented format
-(`docs/CSV_FORMAT.md`): ``date,item_name,quantity,revenue``. The data has
-weekly seasonality (busy Fri–Sun), mild monthly seasonality, a gentle upward
-trend, and per-day noise — enough structure that the weekday-average forecaster
-has something real to learn.
+(`docs/CSV_FORMAT.md`): ``date,item_name,quantity,revenue``. Baseline structure:
+weekly seasonality (busy Fri-Sun), mild monthly seasonality, a gentle upward
+trend, and per-day noise.
 
-Stdlib only. Deterministic for a given --seed.
+``--realistic`` layers on the messiness real demand actually has — holidays and
+closures, bad-weather dips, item promotions, occasional local-event spikes,
+intermittent low-volume items, a closed weekday, and heavier weekend variance —
+so backtests are a fair stress test rather than a clean-data best case.
+
+Stdlib only. Deterministic for a given --seed. Closed/missing days are simply
+omitted (missing != zero, per the data model).
 
 Examples:
-    uv run python scripts/generate_sample_sales.py                 # 365 days -> sample_sales.csv
-    uv run python scripts/generate_sample_sales.py --days 540 --out data.csv
-    uv run python scripts/generate_sample_sales.py --out -         # write to stdout
+    python scripts/generate_sample_sales.py                       # clean, 365 days
+    python scripts/generate_sample_sales.py --realistic           # messy stress test
+    python scripts/generate_sample_sales.py --level-shift-pct 0.4 --out shift.csv
+    python scripts/generate_sample_sales.py --realistic --out -   # to stdout
 """
 
 from __future__ import annotations
@@ -21,7 +27,7 @@ import argparse
 import csv
 import random
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
 
@@ -31,15 +37,16 @@ class MenuItem:
     base_mean: float  # typical units on an average day
     price: float  # unit price in USD
     weekend_boost: float  # extra demand on Fri/Sat/Sun
+    intermittent: bool = False  # sporadic low-volume item (gaps/zeros)
 
 
 MENU: tuple[MenuItem, ...] = (
     MenuItem("Cheeseburger", 80, 9.50, 1.25),
     MenuItem("Chicken Sandwich", 55, 10.00, 1.20),
-    MenuItem("Veggie Burger", 18, 9.00, 1.00),
+    MenuItem("Veggie Burger", 18, 9.00, 1.00, intermittent=True),
     MenuItem("Fries", 130, 4.00, 1.15),
     MenuItem("Wings", 60, 11.00, 1.35),
-    MenuItem("Caesar Salad", 30, 8.50, 0.90),
+    MenuItem("Caesar Salad", 30, 8.50, 0.90, intermittent=True),
     MenuItem("Milkshake", 40, 5.50, 1.30),
     MenuItem("Soda", 150, 2.50, 1.10),
 )
@@ -63,21 +70,89 @@ MONTH_MULTIPLIER = {
     12: 1.15,
 }
 
+# Fixed-date holiday demand factors; 0.0 (or Thanksgiving) means closed.
+_FIXED_HOLIDAYS = {
+    (1, 1): 0.40,  # New Year's Day — slow
+    (2, 14): 1.45,  # Valentine's Day — busy
+    (7, 4): 1.30,  # Independence Day
+    (12, 24): 0.55,  # Christmas Eve
+    (12, 25): 0.0,  # Christmas — closed
+    (12, 31): 1.55,  # New Year's Eve
+}
+
+
+@dataclass(frozen=True)
+class SimConfig:
+    noise_sigma: float = 0.12
+    weekend_extra_sigma: float = 0.0
+    holidays: bool = False
+    weather: bool = False
+    events: bool = False
+    promos: bool = False
+    intermittent: bool = False
+    closed_weekday: int | None = None
+    level_shift_pct: float = 0.0
+    level_shift_at: float = 0.6
+    promo_windows: tuple[tuple[str, int, int, float], ...] = field(default_factory=tuple)
+
+
+def realistic_config() -> SimConfig:
+    return SimConfig(
+        noise_sigma=0.15,
+        weekend_extra_sigma=0.08,
+        holidays=True,
+        weather=True,
+        events=True,
+        promos=True,
+        intermittent=True,
+        closed_weekday=0,  # closed Mondays
+    )
+
+
+def _nth_weekday(year: int, month: int, weekday: int, n: int) -> date:
+    first = date(year, month, 1)
+    offset = (weekday - first.weekday()) % 7
+    return first + timedelta(days=offset + 7 * (n - 1))
+
+
+def holiday_factor(day: date) -> float | None:
+    """Demand factor for a holiday, ``None`` if closed, ``1.0`` if not a holiday."""
+    if day == _nth_weekday(day.year, 11, 3, 4):  # Thanksgiving (4th Thu) — closed
+        return None
+    factor = _FIXED_HOLIDAYS.get((day.month, day.day))
+    if factor is None:
+        return 1.0
+    return None if factor == 0.0 else factor
+
+
+def _plan_promos(
+    rng: random.Random, days: int, sellable: list[MenuItem]
+) -> tuple[tuple[str, int, int, float], ...]:
+    """Randomly schedule a handful of multi-day single-item promotions."""
+    windows: list[tuple[str, int, int, float]] = []
+    for _ in range(max(1, days // 90)):  # ~1 promo per quarter
+        item = rng.choice(sellable)
+        start = rng.randint(0, max(0, days - 10))
+        length = rng.randint(5, 10)
+        multiplier = rng.uniform(1.5, 2.2)
+        windows.append((item.name, start, start + length, multiplier))
+    return tuple(windows)
+
 
 def daily_quantity(
     item: MenuItem,
     day: date,
-    trend: float,
+    day_multiplier: float,
+    extra_sigma: float,
     rng: random.Random,
 ) -> int:
-    weekday = day.weekday()
     demand = item.base_mean
-    demand *= WEEKDAY_MULTIPLIER[weekday]
+    demand *= WEEKDAY_MULTIPLIER[day.weekday()]
     demand *= MONTH_MULTIPLIER[day.month]
-    demand *= trend
-    if weekday >= 4:  # Fri/Sat/Sun
+    demand *= day_multiplier
+    if day.weekday() >= 4:  # Fri/Sat/Sun
         demand *= item.weekend_boost
-    demand *= rng.gauss(1.0, 0.12)  # day-to-day noise
+    demand *= rng.gauss(1.0, extra_sigma)
     return max(0, round(demand))
 
 
@@ -85,23 +160,54 @@ def generate_rows(
     start: date,
     days: int,
     seed: int,
-    level_shift_pct: float = 0.0,
-    level_shift_at: float = 0.6,
+    config: SimConfig | None = None,
 ) -> list[tuple[str, str, int, str]]:
+    cfg = config or SimConfig()
     rng = random.Random(seed)
+    shift_offset = int(days * cfg.level_shift_at)
+
+    promo_windows = (
+        cfg.promo_windows
+        if cfg.promo_windows
+        else (_plan_promos(rng, days, list(MENU)) if cfg.promos else ())
+    )
+
     rows: list[tuple[str, str, int, str]] = []
-    shift_offset = int(days * level_shift_at)
     for offset in range(days):
         day = start + timedelta(days=offset)
-        # Linear growth ~0.9 -> ~1.1 across the whole range (about 20% overall).
-        trend = 0.9 + 0.2 * (offset / max(1, days - 1))
-        # Optional one-time sustained level shift (e.g. a price change or a new
-        # nearby attraction). Averaging models lag it; trend/level-aware models
-        # (holt_winters, level_adjusted) track it.
-        if level_shift_pct and offset >= shift_offset:
-            trend *= 1.0 + level_shift_pct
+
+        if cfg.closed_weekday is not None and day.weekday() == cfg.closed_weekday:
+            continue  # restaurant closed — omit the day entirely
+
+        day_multiplier = 0.9 + 0.2 * (offset / max(1, days - 1))  # gentle trend
+        if cfg.level_shift_pct and offset >= shift_offset:
+            day_multiplier *= 1.0 + cfg.level_shift_pct
+
+        if cfg.holidays:
+            factor = holiday_factor(day)
+            if factor is None:
+                continue  # holiday closure
+            day_multiplier *= factor
+
+        if cfg.weather and rng.random() < 0.08:  # a bad-weather day
+            day_multiplier *= rng.uniform(0.60, 0.85)
+        if cfg.events and rng.random() < 0.03:  # local event spike
+            day_multiplier *= rng.uniform(1.4, 1.8)
+
+        extra_sigma = cfg.noise_sigma
+        if day.weekday() >= 4:
+            extra_sigma += cfg.weekend_extra_sigma
+
         for item in MENU:
-            quantity = daily_quantity(item, day, trend, rng)
+            # Intermittent items sell sporadically — some days simply absent.
+            if cfg.intermittent and item.intermittent and rng.random() < 0.35:
+                continue
+            promo_mult = 1.0
+            for name, p_start, p_end, mult in promo_windows:
+                if name == item.name and p_start <= offset < p_end:
+                    promo_mult = mult
+                    break
+            quantity = daily_quantity(item, day, day_multiplier * promo_mult, extra_sigma, rng)
             revenue = f"{quantity * item.price:.2f}"
             rows.append((day.isoformat(), item.name, quantity, revenue))
     return rows
@@ -117,6 +223,11 @@ def main(argv: list[str] | None = None) -> int:
         help="last business date, YYYY-MM-DD (default: today, keeps forecasts fresh)",
     )
     parser.add_argument("--seed", type=int, default=42, help="RNG seed (default 42)")
+    parser.add_argument(
+        "--realistic",
+        action="store_true",
+        help="layer on holidays, weather, promos, events, intermittency, closed Mondays",
+    )
     parser.add_argument(
         "--level-shift-pct",
         type=float,
@@ -141,8 +252,22 @@ def main(argv: list[str] | None = None) -> int:
     if not 0.0 <= args.level_shift_at <= 1.0:
         parser.error("--level-shift-at must be between 0 and 1")
 
+    base = realistic_config() if args.realistic else SimConfig()
+    config = SimConfig(
+        noise_sigma=base.noise_sigma,
+        weekend_extra_sigma=base.weekend_extra_sigma,
+        holidays=base.holidays,
+        weather=base.weather,
+        events=base.events,
+        promos=base.promos,
+        intermittent=base.intermittent,
+        closed_weekday=base.closed_weekday,
+        level_shift_pct=args.level_shift_pct,
+        level_shift_at=args.level_shift_at,
+    )
+
     start = args.end - timedelta(days=args.days - 1)
-    rows = generate_rows(start, args.days, args.seed, args.level_shift_pct, args.level_shift_at)
+    rows = generate_rows(start, args.days, args.seed, config)
 
     def emit(stream) -> None:
         writer = csv.writer(stream)
@@ -157,9 +282,10 @@ def main(argv: list[str] | None = None) -> int:
         emit(stream)
 
     total_units = sum(r[2] for r in rows)
+    mode = "realistic" if args.realistic else "clean"
     print(
-        f"Wrote {len(rows)} rows ({args.days} days x {len(MENU)} items) "
-        f"covering {start.isoformat()}..{args.end.isoformat()} to {args.out} "
+        f"Wrote {len(rows)} rows ({mode}) covering "
+        f"{start.isoformat()}..{args.end.isoformat()} to {args.out} "
         f"({total_units:,} total units).",
         file=sys.stderr,
     )

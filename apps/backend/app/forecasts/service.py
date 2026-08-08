@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -20,10 +21,12 @@ from app.forecasts.exceptions import (
     InsufficientForecastHistoryError,
     StaleSalesDataError,
 )
+from app.forecasts.metrics import AccuracyMetrics, ForecastActualPair, compute_metrics
 from app.forecasts.models import Forecast, ForecastRun
 from app.forecasts.repository import ForecastRepository
 from app.locations.models import Location
 from app.locations.service import LocationService
+from app.sales.csv import normalize_item_name
 from app.sales.repository import SalesRepository
 from app.users.models import User
 
@@ -124,6 +127,32 @@ class ForecastService:
             raise ForecastNotFoundError()
         forecasts = await self.repository.list_forecasts_for_run(run.id)
         return run, forecasts
+
+    async def accuracy(
+        self,
+        *,
+        user: User,
+        location_id: UUID,
+        start_date: date | None = None,
+        end_date: date | None = None,
+        item: str | None = None,
+        forecast_run_id: UUID | None = None,
+    ) -> AccuracyMetrics:
+        location = await self.locations.get(user, location_id)
+        item_normalized = normalize_item_name(item) if item else None
+        pairs = await self.repository.forecast_actual_pairs(
+            location_id=location.id,
+            start_date=start_date,
+            end_date=end_date,
+            item_normalized=item_normalized,
+            forecast_run_id=forecast_run_id,
+        )
+        return compute_metrics(
+            [
+                ForecastActualPair(predicted=predicted, actual=Decimal(actual))
+                for predicted, actual in pairs
+            ]
+        )
 
     @staticmethod
     def _local_today(location: Location) -> date:

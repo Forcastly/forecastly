@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
+from datetime import date
 from itertools import groupby
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.core.dependencies import SessionDep
 from app.forecasts.models import Forecast
 from app.forecasts.repository import ForecastRepository
 from app.forecasts.schemas import (
+    ForecastAccuracyResponse,
     ForecastDay,
     ForecastDayItem,
     ForecastPointSchema,
@@ -79,4 +81,36 @@ async def latest_forecast(
     return LatestForecastResponse(
         run=ForecastRunSchema.model_validate(run),
         days=_group_by_day(forecasts),
+    )
+
+
+@router.get(
+    "/locations/{location_id}/forecast-accuracy",
+    response_model=ForecastAccuracyResponse,
+)
+async def forecast_accuracy(
+    location_id: UUID,
+    user: CurrentUser,
+    service: ForecastServiceDep,
+    start_date: Annotated[date | None, Query()] = None,
+    end_date: Annotated[date | None, Query()] = None,
+    item: Annotated[str | None, Query()] = None,
+    forecast_run_id: Annotated[UUID | None, Query()] = None,
+) -> ForecastAccuracyResponse:
+    metrics = await service.accuracy(
+        user=user,
+        location_id=location_id,
+        start_date=start_date,
+        end_date=end_date,
+        item=item,
+        forecast_run_id=forecast_run_id,
+    )
+    return ForecastAccuracyResponse(
+        location_id=location_id,
+        start_date=start_date,
+        end_date=end_date,
+        evaluated_observations=metrics.evaluated_observations,
+        wape=metrics.wape,
+        mae=metrics.mae,
+        bias=metrics.bias,
     )

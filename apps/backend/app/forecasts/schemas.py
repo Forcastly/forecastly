@@ -47,3 +47,13 @@ class ForecastDay(BaseModel):
 class LatestForecastResponse(BaseModel):
     run: ForecastRunSchema
     days: list[ForecastDay]
+
+
+class ForecastAccuracyResponse(BaseModel):
+    location_id: UUID
+    start_date: date | None
+    end_date: date | None
+    evaluated_observations: int
+    wape: Decimal | None
+    mae: Decimal | None
+    bias: Decimal | None

@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # CORS — explicit origins only; never "*" for credentialed requests.
     cors_origins: list[str] = Field(default_factory=list)
 
+    # Maximum accepted sales-CSV upload size in bytes (default 5 MB).
+    max_upload_bytes: int = 5 * 1024 * 1024
+
     # Clerk (external auth provider). Optional until wired.
     clerk_secret_key: str | None = None
     clerk_publishable_key: str | None = None

@@ -31,9 +31,16 @@ package = false
 [tool.ruff]
 line-length = 100
 # target-version is inferred from project.requires-python.
+# Generated Alembic revisions are artifacts — don't lint their style.
+extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
+
+[tool.ruff.lint.isort]
+# A local `alembic/` dir would otherwise mis-classify the `alembic` package.
+known-first-party = ["app"]
+known-third-party = ["alembic"]
 
 [tool.pyright]
 pythonVersion = "3.14"

@@ -22,6 +22,7 @@ from app.sales.schemas import (
     SalesImportListResponse,
     SalesImportResponse,
     SalesListResponse,
+    SalesSummaryResponse,
 )
 from app.sales.service import SalesService
 from app.users.dependencies import CurrentUser
@@ -108,4 +109,30 @@ async def list_sales(
     return SalesListResponse(
         items=[SaleResponse.model_validate(row) for row in rows],
         next_cursor=next_cursor,
+    )
+
+
+@router.get(
+    "/locations/{location_id}/sales/summary",
+    response_model=SalesSummaryResponse,
+)
+async def sales_summary(
+    location_id: UUID,
+    user: CurrentUser,
+    service: SalesServiceDep,
+    start_date: Annotated[date | None, Query()] = None,
+    end_date: Annotated[date | None, Query()] = None,
+) -> SalesSummaryResponse:
+    total_quantity, total_revenue, days_with_data = await service.summary(
+        user=user,
+        location_id=location_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    return SalesSummaryResponse(
+        start_date=start_date,
+        end_date=end_date,
+        total_quantity=total_quantity,
+        total_revenue=total_revenue,
+        days_with_data=days_with_data,
     )

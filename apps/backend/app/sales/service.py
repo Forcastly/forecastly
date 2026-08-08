@@ -13,6 +13,7 @@ import binascii
 import hashlib
 import json
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
@@ -187,3 +188,16 @@ class SalesService:
             cursor=decoded,
         )
         return rows, (encode_cursor(next_cursor) if next_cursor else None)
+
+    async def summary(
+        self,
+        *,
+        user: User,
+        location_id: UUID,
+        start_date: date | None,
+        end_date: date | None,
+    ) -> tuple[int, Decimal | None, int]:
+        location = await self.locations.get(user, location_id)
+        return await self.sales.summary(
+            location_id=location.id, start_date=start_date, end_date=end_date
+        )

@@ -49,6 +49,11 @@ class LatestForecastResponse(BaseModel):
     days: list[ForecastDay]
 
 
+class ForecastRunListResponse(BaseModel):
+    items: list[ForecastRunSchema]
+    next_cursor: str | None
+
+
 class ForecastAccuracyResponse(BaseModel):
     location_id: UUID
     start_date: date | None

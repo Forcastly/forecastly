@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import and_, func, or_, select
@@ -166,3 +167,28 @@ class SalesRepository:
             select(Sale).where(Sale.location_id == location_id).order_by(Sale.business_date.asc())
         )
         return list(await self.session.scalars(stmt))
+
+    async def summary(
+        self,
+        *,
+        location_id: UUID,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> tuple[int, Decimal | None, int]:
+        """Aggregate (total_quantity, total_revenue, days_with_data) for a range.
+
+        ``total_revenue`` is None when no revenue is recorded — sums ignore NULL
+        revenue rather than treating missing revenue as zero.
+        """
+        stmt = select(
+            func.coalesce(func.sum(Sale.quantity), 0),
+            func.sum(Sale.revenue),
+            func.count(func.distinct(Sale.business_date)),
+        ).where(Sale.location_id == location_id)
+        if start_date is not None:
+            stmt = stmt.where(Sale.business_date >= start_date)
+        if end_date is not None:
+            stmt = stmt.where(Sale.business_date <= end_date)
+
+        total_quantity, total_revenue, days_with_data = (await self.session.execute(stmt)).one()
+        return int(total_quantity), total_revenue, int(days_with_data)

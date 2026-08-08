@@ -6,11 +6,14 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.forecasts.models import Forecast, ForecastRun
 from app.sales.models import Sale
+
+# Cursor for forecast-run pagination: the last run's (generated_at, id).
+ForecastRunCursor = tuple[datetime, UUID]
 
 
 class ForecastRepository:
@@ -51,6 +54,39 @@ class ForecastRepository:
             .limit(1)
         )
         return await self.session.scalar(stmt)
+
+    async def get_run(self, run_id: UUID) -> ForecastRun | None:
+        return await self.session.get(ForecastRun, run_id)
+
+    async def list_runs(
+        self,
+        *,
+        location_id: UUID,
+        limit: int,
+        cursor: ForecastRunCursor | None = None,
+    ) -> tuple[list[ForecastRun], ForecastRunCursor | None]:
+        stmt = select(ForecastRun).where(ForecastRun.location_id == location_id)
+        if cursor is not None:
+            generated_at, run_id = cursor
+            # Keyset for ORDER BY generated_at DESC, id ASC.
+            stmt = stmt.where(
+                or_(
+                    ForecastRun.generated_at < generated_at,
+                    and_(
+                        ForecastRun.generated_at == generated_at,
+                        ForecastRun.id > run_id,
+                    ),
+                )
+            )
+        stmt = stmt.order_by(ForecastRun.generated_at.desc(), ForecastRun.id.asc()).limit(limit + 1)
+
+        found = list(await self.session.scalars(stmt))
+        has_more = len(found) > limit
+        page = found[:limit]
+        next_cursor: ForecastRunCursor | None = None
+        if has_more and page:
+            next_cursor = (page[-1].generated_at, page[-1].id)
+        return page, next_cursor
 
     async def list_forecasts_for_run(self, run_id: UUID) -> list[Forecast]:
         stmt = (

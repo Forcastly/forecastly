@@ -18,6 +18,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 # Register all models on Base.metadata before create_all.
+import app.forecasts.models  # noqa: F401
 import app.locations.models  # noqa: F401
 import app.restaurants.models  # noqa: F401
 import app.sales.models  # noqa: F401
@@ -30,6 +31,8 @@ from app.main import app
 TEST_DB_NAME = "forecastly_test"
 # Child-before-parent order for TRUNCATE readability (CASCADE handles FKs anyway).
 _TABLES = (
+    "forecasts",
+    "forecast_runs",
     "sales",
     "sales_imports",
     "locations",

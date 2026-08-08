@@ -159,3 +159,10 @@ class SalesRepository:
             last = page[-1]
             next_cursor = (last.business_date, last.item_name, last.id)
         return page, next_cursor
+
+    async def list_observations(self, location_id: UUID) -> list[Sale]:
+        """All sales for a location, oldest first — history for forecasting."""
+        stmt = (
+            select(Sale).where(Sale.location_id == location_id).order_by(Sale.business_date.asc())
+        )
+        return list(await self.session.scalars(stmt))

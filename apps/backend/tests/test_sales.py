@@ -55,7 +55,7 @@ async def test_upload_valid_csv(client: AsyncClient) -> None:
     assert body["row_count"] == 2
     assert body["accepted_row_count"] == 2
     assert body["rejected_row_count"] == 0
-    assert body["forecast_generated"] is False
+    assert body["forecast_generated"] is True  # auto-run generates from the new data
 
 
 async def test_uploaded_sales_are_listed(client: AsyncClient) -> None:

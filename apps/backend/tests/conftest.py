@@ -18,6 +18,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 # Register all models on Base.metadata before create_all.
+import app.locations.models  # noqa: F401
 import app.restaurants.models  # noqa: F401
 import app.users.models  # noqa: F401
 from app.core.config import get_settings
@@ -27,7 +28,13 @@ from app.main import app
 
 TEST_DB_NAME = "forecastly_test"
 # Child-before-parent order for TRUNCATE readability (CASCADE handles FKs anyway).
-_TABLES = ("restaurant_memberships", "restaurants", "user_identities", "users")
+_TABLES = (
+    "locations",
+    "restaurant_memberships",
+    "restaurants",
+    "user_identities",
+    "users",
+)
 
 
 def _urls() -> tuple[str, str]:

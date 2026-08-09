@@ -38,10 +38,19 @@ export function HistoryForecastChart({
   locationId: string;
   latest: LatestForecast;
 }) {
+  // Rank items by total predicted volume so the busiest item is the default and
+  // leads the dropdown — an alphabetical first item is often near-empty.
   const items = useMemo(() => {
-    const set = new Set<string>();
-    latest.days.forEach((day) => day.items.forEach((i) => set.add(i.item_name)));
-    return Array.from(set).sort();
+    const totals = new Map<string, number>();
+    latest.days.forEach((day) =>
+      day.items.forEach((i) =>
+        totals.set(
+          i.item_name,
+          (totals.get(i.item_name) ?? 0) + (toNumber(i.predicted_quantity) ?? 0),
+        ),
+      ),
+    );
+    return [...totals.keys()].sort((a, b) => (totals.get(b) ?? 0) - (totals.get(a) ?? 0));
   }, [latest]);
 
   const [item, setItem] = useState(items[0] ?? "");
@@ -94,14 +103,24 @@ export function HistoryForecastChart({
               fontSize={11}
               minTickGap={24}
             />
-            <YAxis fontSize={11} width={32} />
-            <Tooltip labelFormatter={(label) => formatBusinessDate(String(label))} />
-            <Legend />
+            <YAxis fontSize={11} width={36} />
+            <Tooltip
+              labelFormatter={(label) => formatBusinessDate(String(label))}
+              contentStyle={{
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "var(--popover)",
+                color: "var(--popover-foreground)",
+                fontSize: 12,
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
             <Line
               type="monotone"
               dataKey="actual"
               name="Actual"
-              stroke="var(--chart-1, #2563eb)"
+              stroke="var(--chart-1)"
+              strokeWidth={2}
               dot={false}
               connectNulls
             />
@@ -109,8 +128,9 @@ export function HistoryForecastChart({
               type="monotone"
               dataKey="forecast"
               name="Forecast"
-              stroke="var(--chart-2, #f59e0b)"
-              strokeDasharray="4 4"
+              stroke="var(--chart-2)"
+              strokeWidth={2}
+              strokeDasharray="5 4"
               dot={false}
               connectNulls
             />

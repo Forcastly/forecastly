@@ -1,0 +1,117 @@
+"""Recipe HTTP routes."""
+
+from __future__ import annotations
+
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
+
+from app.core.dependencies import SessionDep
+from app.forecasts.repository import ForecastRepository
+from app.locations.repository import LocationRepository
+from app.locations.service import LocationService
+from app.recipes.models import Recipe
+from app.recipes.repository import RecipeRepository
+from app.recipes.schemas import (
+    IngredientListResponse,
+    IngredientResponse,
+    MenuItem,
+    MenuItemListResponse,
+    RecipeCreate,
+    RecipeLineResponse,
+    RecipeResponse,
+)
+from app.recipes.service import RecipeService
+from app.restaurants.repository import RestaurantRepository
+from app.sales.repository import SalesRepository
+from app.users.dependencies import CurrentUser
+
+router = APIRouter(tags=["recipes"])
+
+
+def get_recipe_service(session: SessionDep) -> RecipeService:
+    locations = LocationService(LocationRepository(session), RestaurantRepository(session))
+    return RecipeService(
+        RecipeRepository(session),
+        locations,
+        SalesRepository(session),
+        ForecastRepository(session),
+    )
+
+
+RecipeServiceDep = Annotated[RecipeService, Depends(get_recipe_service)]
+
+
+def _recipe_response(recipe: Recipe) -> RecipeResponse:
+    return RecipeResponse(
+        id=recipe.id,
+        item_name=recipe.item_name,
+        item_name_normalized=recipe.item_name_normalized,
+        lines=[
+            RecipeLineResponse(
+                ingredient_id=line.ingredient_id,
+                ingredient_name=line.ingredient.name,
+                unit=line.ingredient.unit,
+                amount=line.amount,
+            )
+            for line in recipe.lines
+        ],
+    )
+
+
+@router.get("/locations/{location_id}/menu-items", response_model=MenuItemListResponse)
+async def list_menu_items(
+    location_id: UUID, user: CurrentUser, service: RecipeServiceDep
+) -> MenuItemListResponse:
+    rows = await service.list_menu_items(user, location_id)
+    return MenuItemListResponse(
+        items=[
+            MenuItem(item_name=name, item_name_normalized=norm, has_recipe=has)
+            for name, norm, has in rows
+        ]
+    )
+
+
+@router.get("/locations/{location_id}/ingredients", response_model=IngredientListResponse)
+async def list_ingredients(
+    location_id: UUID, user: CurrentUser, service: RecipeServiceDep
+) -> IngredientListResponse:
+    ingredients = await service.list_ingredients(user, location_id)
+    return IngredientListResponse(
+        items=[IngredientResponse.model_validate(i) for i in ingredients]
+    )
+
+
+@router.get(
+    "/locations/{location_id}/recipes/{item_name_normalized}",
+    response_model=RecipeResponse,
+)
+async def get_recipe(
+    location_id: UUID,
+    item_name_normalized: str,
+    user: CurrentUser,
+    service: RecipeServiceDep,
+) -> RecipeResponse:
+    recipe = await service.get_recipe(user, location_id, item_name_normalized)
+    return _recipe_response(recipe)
+
+
+@router.post(
+    "/locations/{location_id}/recipes",
+    status_code=status.HTTP_201_CREATED,
+    response_model=RecipeResponse,
+)
+async def create_recipe(
+    location_id: UUID,
+    body: RecipeCreate,
+    user: CurrentUser,
+    service: RecipeServiceDep,
+) -> RecipeResponse:
+    recipe = await service.create_recipe(
+        user=user,
+        location_id=location_id,
+        item_name=body.item_name,
+        lines=body.lines,
+    )
+    return _recipe_response(recipe)

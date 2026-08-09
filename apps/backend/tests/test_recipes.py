@@ -116,3 +116,21 @@ async def test_line_referencing_unknown_ingredient_id_is_404(client: AsyncClient
     )
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "ingredient_not_found"
+
+
+async def test_duplicate_ingredient_lines_are_rejected(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [
+                {"ingredient_name": "Bun", "unit": "ea", "amount": "1"},
+                # Same ingredient, different display spelling — normalizes the same.
+                {"ingredient_name": "  bun ", "unit": "ea", "amount": "2"},
+            ],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "validation_error"

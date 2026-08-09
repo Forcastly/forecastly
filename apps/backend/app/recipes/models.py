@@ -79,5 +79,5 @@ class RecipeIngredient(TimestampMixin, Base):
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)
 
-    recipe: Mapped[Recipe] = relationship(back_populates="lines")
+    recipe: Mapped[Recipe] = relationship(back_populates="lines", lazy="joined")
     ingredient: Mapped[Ingredient] = relationship(lazy="joined")

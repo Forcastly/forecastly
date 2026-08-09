@@ -7,6 +7,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.sales.csv import normalize_item_name
+
 
 class RecipeLineInput(BaseModel):
     """One ingredient line. Either reference an existing ingredient by id, or
@@ -27,13 +29,43 @@ class RecipeLineInput(BaseModel):
         return self
 
 
+def _check_no_duplicate_ingredient_lines(lines: list[RecipeLineInput]) -> None:
+    """Reject lines that reference the same ingredient twice — by id, or by
+    name once normalized. A true duplicate here would otherwise trip the
+    ``recipe_ingredients`` unique constraint and surface as a misleading
+    "duplicate recipe" conflict; this catches it earlier with a clear error.
+    """
+    seen_ids: set[UUID] = set()
+    seen_names: set[str] = set()
+    for line in lines:
+        if line.ingredient_id is not None:
+            if line.ingredient_id in seen_ids:
+                raise ValueError("Duplicate ingredient_id in lines.")
+            seen_ids.add(line.ingredient_id)
+        elif line.ingredient_name is not None:
+            normalized = normalize_item_name(line.ingredient_name)
+            if normalized in seen_names:
+                raise ValueError("Duplicate ingredient_name in lines.")
+            seen_names.add(normalized)
+
+
 class RecipeCreate(BaseModel):
     item_name: str = Field(min_length=1, max_length=255)
     lines: list[RecipeLineInput] = Field(min_length=1)
 
+    @model_validator(mode="after")
+    def _no_duplicate_ingredient_lines(self) -> RecipeCreate:
+        _check_no_duplicate_ingredient_lines(self.lines)
+        return self
+
 
 class RecipeUpdate(BaseModel):
     lines: list[RecipeLineInput] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _no_duplicate_ingredient_lines(self) -> RecipeUpdate:
+        _check_no_duplicate_ingredient_lines(self.lines)
+        return self
 
 
 class RecipeLineResponse(BaseModel):

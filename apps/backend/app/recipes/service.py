@@ -100,21 +100,27 @@ class RecipeService:
     ) -> Recipe:
         location = await self.locations.get(user, location_id)
         normalized = normalize_item_name(item_name)
+        # Only the recipe-row insert maps IntegrityError to "duplicate recipe" —
+        # that's the only constraint this violates. A duplicate ingredient
+        # reference within `lines` (recipe_ingredients' unique constraint) is
+        # rejected earlier, at the schema level, with a clear 422 instead of
+        # being funneled through this same misleading message.
         try:
             recipe = await self.repository.create_recipe(
                 location_id=location.id,
                 item_name=item_name.strip(),
                 item_name_normalized=normalized,
             )
-            for line in lines:
-                ingredient = await self._resolve_ingredient(location.id, line)
-                await self.repository.add_line(
-                    recipe_id=recipe.id,
-                    ingredient_id=ingredient.id,
-                    amount=line.amount,
-                )
-            await self.session.commit()
         except IntegrityError:
             await self.session.rollback()
             raise DuplicateRecipeError() from None
+
+        for line in lines:
+            ingredient = await self._resolve_ingredient(location.id, line)
+            await self.repository.add_line(
+                recipe_id=recipe.id,
+                ingredient_id=ingredient.id,
+                amount=line.amount,
+            )
+        await self.session.commit()
         return await self.get_recipe(user, location.id, normalized)

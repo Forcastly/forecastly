@@ -50,13 +50,47 @@ async def test_generate_forecast(client: AsyncClient) -> None:
 
     assert response.status_code == 201
     body = response.json()
-    assert body["run"]["model_version"] == "weekday_average_v1"
+    assert body["run"]["model_version"] == "champion_hybrid_v1"
     assert body["run"]["horizon_days"] == 7
     assert len(body["forecasts"]) == 7
+    # Thin history (no backtest windows) -> weekday-average fallback per point.
+    assert all(f["model_name"] == "weekday_average_v1" for f in body["forecasts"])
 
     target_date = (date.today() + timedelta(days=7)).isoformat()
     target = next(f for f in body["forecasts"] if f["forecast_date"] == target_date)
     assert target["predicted_quantity"] == "95.0000"  # (110+100+90+80)/4
+
+
+ROSTER = {
+    "seasonal_naive",
+    "seasonal_average",
+    "ewma_weekday",
+    "level_adjusted_seasonal_naive_v2",
+    "holt_winters",
+}
+
+
+async def test_generate_uses_champion_with_rich_history(client: AsyncClient) -> None:
+    location_id = await _make_location(client)
+    today = date.today()
+    # ~70 days so the tournament can build windows and pick a real champion.
+    lines = [
+        f"{(today - timedelta(days=69 - k)).isoformat()},Cheeseburger,"
+        f"{100 + (today - timedelta(days=69 - k)).weekday() * 10},"
+        for k in range(70)
+    ]
+    await _upload(client, location_id, _csv(*lines))
+
+    response = await client.post(f"/api/locations/{location_id}/forecasts", headers=ALICE)
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["run"]["model_version"] == "champion_hybrid_v1"
+    assert len(body["forecasts"]) == 7
+    # Rich history -> a tournament champion produced the points, not the fallback.
+    models_used = {f["model_name"] for f in body["forecasts"]}
+    assert models_used <= ROSTER
+    assert "weekday_average_v1" not in models_used
 
 
 async def test_generate_without_history_is_422(client: AsyncClient) -> None:
@@ -88,9 +122,10 @@ async def test_latest_forecast(client: AsyncClient) -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["run"]["model_version"] == "weekday_average_v1"
+    assert body["run"]["model_version"] == "champion_hybrid_v1"
     assert len(body["days"]) == 7
     assert body["days"][0]["items"][0]["item_name"] == "Cheeseburger"
+    assert body["days"][0]["items"][0]["model_name"]
 
 
 async def test_latest_forecast_none_is_404(client: AsyncClient) -> None:

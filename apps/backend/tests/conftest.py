@@ -31,6 +31,9 @@ from app.main import app
 TEST_DB_NAME = "forecastly_test"
 # Child-before-parent order for TRUNCATE readability (CASCADE handles FKs anyway).
 _TABLES = (
+    "model_evaluation_windows",
+    "model_evaluation_results",
+    "model_evaluation_runs",
     "forecasts",
     "forecast_runs",
     "sales",

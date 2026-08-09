@@ -8,8 +8,14 @@ from uuid import UUID
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.forecasts.models import Forecast, ForecastRun
+from app.forecasts.models import (
+    Forecast,
+    ForecastRun,
+    ModelEvaluationResult,
+    ModelEvaluationRun,
+)
 from app.sales.models import Sale
 
 # Cursor for forecast-run pagination: the last run's (generated_at, id).
@@ -147,3 +153,28 @@ class ForecastRepository:
         )
         result = await self.session.execute(stmt)
         return [(row.predicted, row.quantity) for row in result]
+
+
+class ModelEvaluationRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def add(self, run: ModelEvaluationRun) -> ModelEvaluationRun:
+        """Persist a run and its cascaded results/windows."""
+        self.session.add(run)
+        await self.session.flush()
+        return run
+
+    async def latest(self, location_id: UUID) -> ModelEvaluationRun | None:
+        stmt = (
+            select(ModelEvaluationRun)
+            .where(ModelEvaluationRun.location_id == location_id)
+            .order_by(ModelEvaluationRun.generated_at.desc())
+            .limit(1)
+            .options(
+                selectinload(ModelEvaluationRun.evaluations).selectinload(
+                    ModelEvaluationResult.windows
+                )
+            )
+        )
+        return await self.session.scalar(stmt)

@@ -288,7 +288,7 @@ export function useRecipe(locationId: string, itemNormalized: string | undefined
     queryFn: async () => {
       try {
         return await apiGet<Recipe>(
-          `/api/locations/${locationId}/recipes/${itemNormalized}`,
+          `/api/locations/${locationId}/recipes/${encodeURIComponent(itemNormalized!)}`,
         );
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) return null;
@@ -312,7 +312,7 @@ export function useSaveRecipe(locationId: string) {
   return useMutation({
     mutationFn: (input: { recipeId?: string; itemName: string; lines: RecipeLinePayload[] }) =>
       input.recipeId
-        ? apiPut<Recipe>(`/api/locations/${locationId}/recipes/${input.recipeId}`, {
+        ? apiPut<Recipe>(`/api/locations/${locationId}/recipes/${encodeURIComponent(input.recipeId)}`, {
             lines: input.lines,
           })
         : apiPost<Recipe>(`/api/locations/${locationId}/recipes`, {
@@ -329,7 +329,7 @@ export function useDeleteRecipe(locationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (recipeId: string) =>
-      apiDelete<void>(`/api/locations/${locationId}/recipes/${recipeId}`),
+      apiDelete<void>(`/api/locations/${locationId}/recipes/${encodeURIComponent(recipeId)}`),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: [scope, "locations", locationId] }),
   });

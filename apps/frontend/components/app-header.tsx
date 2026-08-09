@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { AuthControls } from "@/components/auth-controls";
 import { DevUserSwitcher } from "@/components/dev-user-switcher";
+
+const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 export function AppHeader() {
   return (
@@ -12,7 +15,7 @@ export function AppHeader() {
         >
           Forecastly
         </Link>
-        <DevUserSwitcher />
+        {clerkEnabled ? <AuthControls /> : <DevUserSwitcher />}
       </div>
     </header>
   );

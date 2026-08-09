@@ -21,6 +21,7 @@ import type {
   LocationItem,
   LocationList,
   MenuItemList,
+  PrepSheet,
   Recipe,
   Restaurant,
   RestaurantList,
@@ -341,5 +342,19 @@ export function useIngredientDemand(locationId: string) {
     queryKey: [scope, "locations", locationId, "ingredient-demand"],
     queryFn: () =>
       apiGet<IngredientDemand>(`/api/locations/${locationId}/ingredient-demand`),
+  });
+}
+
+/**
+ * One day's prep sheet. Pass no date on first load — the backend resolves the
+ * location's local today, clamped into the forecast horizon, and echoes back the
+ * date it served.
+ */
+export function usePrepSheet(locationId: string, date: string | undefined) {
+  const scope = useScope();
+  return useQuery({
+    queryKey: [scope, "locations", locationId, "prep-sheet", date ?? "default"],
+    queryFn: () =>
+      apiGet<PrepSheet>(`/api/locations/${locationId}/prep-sheet${qs({ date })}`),
   });
 }

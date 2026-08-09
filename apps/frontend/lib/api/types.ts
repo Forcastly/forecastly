@@ -31,6 +31,8 @@ export type RecipeLine = Schemas["RecipeLineResponse"];
 export type IngredientDemand = Schemas["IngredientDemandResponse"];
 export type IngredientDemandDay = Schemas["IngredientDemandDay"];
 export type IngredientQuantity = Schemas["IngredientQuantitySchema"];
+export type PrepSheet = Schemas["PrepSheetResponse"];
+export type PrepSheetItem = Schemas["PrepSheetItem"];
 
 export type ApiErrorDetail = {
   row?: number | null;

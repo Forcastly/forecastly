@@ -50,8 +50,8 @@ Welcome screen); old demo data lives under the `dev` provider.
 
 ## Git
 
-- `main` has the design system + first screens. Open PRs: **#13** (upload dialog),
-  **#14** (Clerk auth). Merge those before branching further.
+- `main` has the design system + first screens. **#13** (upload dialog), **#14**
+  (Clerk auth), and **#15** are merged.
 - Commit convention: `feat(scope): ...`, author = repo user, no co-author / AI footer.
 
 ## Next steps

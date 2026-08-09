@@ -91,12 +91,30 @@ class RecipeService:
         )
         if existing is not None:
             return existing  # stored unit stays authoritative
-        return await self.repository.create_ingredient(
-            location_id=location_id,
-            name=line.ingredient_name.strip(),
-            name_normalized=normalized,
-            unit=line.unit.strip(),
-        )
+        # Check-then-insert race: two concurrent requests creating the same
+        # new ingredient name for this location can both miss the SELECT
+        # above and both attempt the INSERT — the loser trips the
+        # ingredients UNIQUE(location_id, name_normalized) constraint. Run
+        # the insert inside a SAVEPOINT so only it rolls back on conflict,
+        # not the whole transaction (which may already hold other flushed
+        # work from this request — e.g. earlier resolved lines, or the
+        # recipe row). Then re-fetch and return the winner's row instead of
+        # letting the IntegrityError propagate into a 500.
+        try:
+            async with self.session.begin_nested():
+                return await self.repository.create_ingredient(
+                    location_id=location_id,
+                    name=line.ingredient_name.strip(),
+                    name_normalized=normalized,
+                    unit=line.unit.strip(),
+                )
+        except IntegrityError:
+            existing = await self.repository.get_ingredient_by_normalized(
+                location_id, normalized
+            )
+            if existing is not None:
+                return existing
+            raise
 
     async def create_recipe(
         self,

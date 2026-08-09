@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from httpx import AsyncClient
 
 ALICE = {"X-Dev-Subject": "alice"}
@@ -44,6 +46,33 @@ async def test_create_recipe_with_inline_ingredients(client: AsyncClient) -> Non
     fetched = await client.get(f"/api/locations/{location_id}/recipes/cheeseburger", headers=ALICE)
     assert fetched.status_code == 200
     assert len(fetched.json()["lines"]) == 2
+
+
+async def test_get_recipe_by_name_containing_slash_round_trips(client: AsyncClient) -> None:
+    # normalize_item_name does not strip "/", and the frontend percent-encodes
+    # it as %2F — the GET-by-name route must use a path converter so this
+    # still matches a single path parameter rather than 404ing.
+    location_id = await _location(client, ALICE)
+    item_name = "Fish / Chips"
+
+    created = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": item_name,
+            "lines": [{"ingredient_name": "Cod", "unit": "lb", "amount": "0.5"}],
+        },
+        headers=ALICE,
+    )
+    assert created.status_code == 201
+    normalized = created.json()["item_name_normalized"]
+    assert "/" in normalized
+
+    fetched = await client.get(
+        f"/api/locations/{location_id}/recipes/{quote(normalized, safe='')}",
+        headers=ALICE,
+    )
+    assert fetched.status_code == 200
+    assert fetched.json()["item_name"] == item_name
 
 
 async def test_menu_items_report_recipe_status(client: AsyncClient) -> None:

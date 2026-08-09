@@ -154,7 +154,7 @@ function RecipeForm({
         return;
       }
       const amount = Number(r.amount);
-      if (r.amount.trim() === "" || Number.isNaN(amount) || amount < 0) {
+      if (r.amount.trim() === "" || Number.isNaN(amount) || amount <= 0) {
         toast.error(`Enter a valid amount for "${r.ingredientName}".`);
         return;
       }

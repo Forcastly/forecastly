@@ -135,3 +135,39 @@
     @apply font-sans;
   }
 }
+
+/* Printing is only meaningful for the prep sheet today: strip the app chrome,
+   force black on white regardless of theme, and flatten cards so a kitchen
+   printer isn't asked to render shadows and dark backgrounds. Anything that
+   shouldn't reach paper is marked `print:hidden` at the call site. */
+@media print {
+  header,
+  nav,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* Cards keep their structure but lose the visual treatment. */
+  [data-slot="card"] {
+    background: #fff !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  /* Muted greys wash out on paper. */
+  .text-muted-foreground {
+    color: #000 !important;
+  }
+}

@@ -7,7 +7,11 @@ atomically. Reads distinct menu items from sales to drive the builder.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.exc import IntegrityError
 
@@ -18,6 +22,7 @@ from app.recipes.exceptions import (
     DuplicateRecipeError,
     DuplicateRecipeLineError,
     IngredientNotFoundError,
+    PrepSheetDateUnavailableError,
     RecipeNotFoundError,
 )
 from app.recipes.explosion import (
@@ -32,6 +37,25 @@ from app.recipes.schemas import RecipeLineInput
 from app.sales.csv import normalize_item_name
 from app.sales.repository import SalesRepository
 from app.users.models import User
+
+
+@dataclass(frozen=True, slots=True)
+class PrepSheetLine:
+    item_name: str
+    predicted_quantity: Decimal
+
+
+@dataclass(frozen=True, slots=True)
+class PrepSheet:
+    """A single day's prep view. ``date`` and the horizon bounds are None when
+    the location has no forecast to draw from."""
+
+    date: date | None
+    run: ForecastRun | None
+    horizon_start: date | None
+    horizon_end: date | None
+    items: list[PrepSheetLine]
+    demand: IngredientDemand
 
 
 class RecipeService:
@@ -221,15 +245,11 @@ class RecipeService:
         await self.repository.delete_recipe(recipe)
         await self.session.commit()
 
-    async def ingredient_demand(
-        self, user: User, location_id: UUID
-    ) -> tuple[ForecastRun | None, IngredientDemand]:
-        location = await self.locations.get(user, location_id)
-        run = await self.forecasts.latest_run(location.id)
-        if run is None:
-            empty = explode([], {})
-            return None, empty
-
+    async def _latest_forecast_points(
+        self, location_id: UUID, run: ForecastRun
+    ) -> tuple[list[ForecastPointInput], dict[str, list[RecipeLine]]]:
+        """The run's forecast points plus this location's recipes, in the shapes
+        ``explode`` expects."""
         forecasts = await self.forecasts.list_forecasts_for_run(run.id)
         points = [
             ForecastPointInput(
@@ -250,6 +270,87 @@ class RecipeService:
                 )
                 for line in recipe.lines
             ]
-            for recipe in await self.repository.list_recipes_with_lines(location.id)
+            for recipe in await self.repository.list_recipes_with_lines(location_id)
         }
+        return points, recipes_by_item
+
+    async def ingredient_demand(
+        self, user: User, location_id: UUID
+    ) -> tuple[ForecastRun | None, IngredientDemand]:
+        location = await self.locations.get(user, location_id)
+        run = await self.forecasts.latest_run(location.id)
+        if run is None:
+            empty = explode([], {})
+            return None, empty
+
+        points, recipes_by_item = await self._latest_forecast_points(location.id, run)
         return run, explode(points, recipes_by_item)
+
+    async def prep_sheet(
+        self, user: User, location_id: UUID, target_date: date | None = None
+    ) -> PrepSheet:
+        """One day of the forecast: menu items to make, and the ingredients they
+        consume.
+
+        ``target_date`` is optional because the forecast horizon starts the day
+        after the last sales date (``ForecastService.generate``), so the
+        location's local today is not necessarily inside it. When omitted, today
+        is clamped into the horizon; when supplied and outside it, that's an
+        error rather than a silent substitution.
+        """
+        location = await self.locations.get(user, location_id)
+        run = await self.forecasts.latest_run(location.id)
+        if run is None:
+            if target_date is not None:
+                raise PrepSheetDateUnavailableError()
+            return PrepSheet(
+                date=None,
+                run=None,
+                horizon_start=None,
+                horizon_end=None,
+                items=[],
+                demand=explode([], {}),
+            )
+
+        points, recipes_by_item = await self._latest_forecast_points(location.id, run)
+        horizon = sorted({p.forecast_date for p in points})
+        if not horizon:
+            # A run with no forecast points (every item lacked usable history).
+            if target_date is not None:
+                raise PrepSheetDateUnavailableError()
+            return PrepSheet(
+                date=None,
+                run=run,
+                horizon_start=None,
+                horizon_end=None,
+                items=[],
+                demand=explode([], {}),
+            )
+
+        start, end = horizon[0], horizon[-1]
+        if target_date is None:
+            today = datetime.now(ZoneInfo(location.timezone)).date()
+            resolved = min(max(today, start), end)
+        elif target_date in horizon:
+            resolved = target_date
+        else:
+            raise PrepSheetDateUnavailableError()
+
+        day_points = [p for p in points if p.forecast_date == resolved]
+        items = sorted(
+            (
+                PrepSheetLine(
+                    item_name=p.item_name, predicted_quantity=p.predicted_quantity
+                )
+                for p in day_points
+            ),
+            key=lambda line: line.item_name,
+        )
+        return PrepSheet(
+            date=resolved,
+            run=run,
+            horizon_start=start,
+            horizon_end=end,
+            items=items,
+            demand=explode(day_points, recipes_by_item),
+        )

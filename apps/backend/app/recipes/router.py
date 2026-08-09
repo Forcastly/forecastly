@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import date as DateType
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.core.dependencies import SessionDep
 from app.forecasts.repository import ForecastRepository
@@ -22,6 +23,8 @@ from app.recipes.schemas import (
     IngredientResponse,
     MenuItem,
     MenuItemListResponse,
+    PrepSheetItem,
+    PrepSheetResponse,
     RecipeCreate,
     RecipeLineResponse,
     RecipeResponse,
@@ -188,5 +191,44 @@ async def ingredient_demand(
             total_items=demand.total_items,
             mapped_items=demand.mapped_items,
             unmapped_items=demand.unmapped_items,
+        ),
+    )
+
+
+@router.get("/locations/{location_id}/prep-sheet", response_model=PrepSheetResponse)
+async def prep_sheet(
+    location_id: UUID,
+    user: CurrentUser,
+    service: RecipeServiceDep,
+    date: Annotated[
+        DateType | None,
+        Query(description="Day to prep for. Defaults to today in the location's timezone."),
+    ] = None,
+) -> PrepSheetResponse:
+    sheet = await service.prep_sheet(user, location_id, date)
+    # Ingredients for a single day live in the explosion's per_day list — one
+    # entry when that day has any mapped item, none at all when it doesn't.
+    ingredients = sheet.demand.per_day[0].ingredients if sheet.demand.per_day else []
+    return PrepSheetResponse(
+        date=sheet.date,
+        generated_at=sheet.run.generated_at.isoformat() if sheet.run is not None else None,
+        horizon_start=sheet.horizon_start,
+        horizon_end=sheet.horizon_end,
+        items=[
+            PrepSheetItem(
+                item_name=line.item_name, predicted_quantity=line.predicted_quantity
+            )
+            for line in sheet.items
+        ],
+        ingredients=[
+            IngredientQuantitySchema(
+                ingredient_id=q.ingredient_id, name=q.name, unit=q.unit, quantity=q.quantity
+            )
+            for q in ingredients
+        ],
+        coverage=IngredientDemandCoverage(
+            total_items=sheet.demand.total_items,
+            mapped_items=sheet.demand.mapped_items,
+            unmapped_items=sheet.demand.unmapped_items,
         ),
     )

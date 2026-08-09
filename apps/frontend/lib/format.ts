@@ -12,6 +12,17 @@ export function formatQty(value: string | number | null | undefined): string {
   return n === null ? "—" : Math.round(n).toLocaleString();
 }
 
+/**
+ * Ingredient amounts, which are genuinely fractional — 0.4 lb of an ingredient
+ * is a real instruction, and formatQty would render it as "0". Up to two
+ * decimals, trailing zeros trimmed.
+ */
+export function formatAmount(value: string | number | null | undefined): string {
+  const n = toNumber(value);
+  if (n === null) return "—";
+  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
 export function formatMoney(value: string | number | null | undefined): string {
   const n = toNumber(value);
   return n === null

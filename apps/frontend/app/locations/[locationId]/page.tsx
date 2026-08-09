@@ -15,6 +15,7 @@ import { ForecastStats } from "@/components/forecast-stats";
 import { IngredientDemandGrid } from "@/components/ingredient-demand-grid";
 import { ModelComparisonCard } from "@/components/model-comparison-card";
 import { PerItemModelsCard } from "@/components/per-item-models-card";
+import { PrepSheet } from "@/components/prep-sheet";
 import { UploadDialog } from "@/components/upload-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,7 +97,7 @@ export default function LocationDashboardPage() {
       <section className="space-y-3">
         <Link
           href="/"
-          className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground print:hidden"
         >
           <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
           Restaurants
@@ -112,7 +113,7 @@ export default function LocationDashboardPage() {
               </p>
             ) : null}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 print:hidden">
             <Link
               href={`/locations/${locationId}/sales`}
               className={buttonVariants({ variant: "outline" })}
@@ -147,10 +148,11 @@ export default function LocationDashboardPage() {
         />
       ) : (
         <Tabs defaultValue="forecast">
-          <TabsList>
+          <TabsList className="print:hidden">
             <TabsTrigger value="forecast">Forecast</TabsTrigger>
             <TabsTrigger value="insights">Accuracy &amp; insights</TabsTrigger>
             <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
+            <TabsTrigger value="prep">Prep</TabsTrigger>
           </TabsList>
 
           <TabsContent value="forecast" className="space-y-6 pt-2">
@@ -192,6 +194,10 @@ export default function LocationDashboardPage() {
               </h2>
             </div>
             <IngredientDemandGrid locationId={locationId} />
+          </TabsContent>
+
+          <TabsContent value="prep" className="space-y-6 pt-2">
+            <PrepSheet locationId={locationId} />
           </TabsContent>
         </Tabs>
       )}

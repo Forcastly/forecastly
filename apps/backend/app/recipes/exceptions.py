@@ -15,6 +15,11 @@ class IngredientNotFoundError(NotFoundError):
     message = "The referenced ingredient was not found for this location."
 
 
+class PrepSheetDateUnavailableError(NotFoundError):
+    code = "prep_sheet_date_unavailable"
+    message = "No forecast covers the requested date."
+
+
 class DuplicateRecipeError(ConflictError):
     code = "duplicate_recipe"
     message = "A recipe already exists for this menu item."

@@ -416,6 +416,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/locations/{location_id}/prep-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prep Sheet */
+        get: operations["prep_sheet_api_locations__location_id__prep_sheet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -781,6 +798,36 @@ export interface components {
             global_champion: string;
             /** Items */
             items: components["schemas"]["ItemChampionSchema"][];
+        };
+        /** PrepSheetItem */
+        PrepSheetItem: {
+            /** Item Name */
+            item_name: string;
+            /** Predicted Quantity */
+            predicted_quantity: string;
+        };
+        /**
+         * PrepSheetResponse
+         * @description One day of the forecast, plus the ingredients it consumes.
+         *
+         *     ``date`` is the day actually served — the request may omit it, in which case
+         *     the service resolves the location's local today clamped into the forecast
+         *     horizon. All four date fields are null when the location has no forecast run.
+         */
+        PrepSheetResponse: {
+            /** Date */
+            date: string | null;
+            /** Generated At */
+            generated_at: string | null;
+            /** Horizon Start */
+            horizon_start: string | null;
+            /** Horizon End */
+            horizon_end: string | null;
+            /** Items */
+            items: components["schemas"]["PrepSheetItem"][];
+            /** Ingredients */
+            ingredients: components["schemas"]["IngredientQuantitySchema"][];
+            coverage: components["schemas"]["IngredientDemandCoverage"];
         };
         /** RecipeCreate */
         RecipeCreate: {
@@ -2005,6 +2052,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IngredientDemandResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prep_sheet_api_locations__location_id__prep_sheet_get: {
+        parameters: {
+            query?: {
+                /** @description Day to prep for. Defaults to today in the location's timezone. */
+                date?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+                "x-dev-subject"?: string | null;
+            };
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrepSheetResponse"];
                 };
             };
             /** @description Validation Error */

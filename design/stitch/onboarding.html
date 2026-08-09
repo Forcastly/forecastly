@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Forecastly - Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Geist font import fallback */
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-SemiBold.woff2') format('woff2');
+            font-weight: 600;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Custom Soft Multi-layered shadow for cards */
+        .shadow-tactile-surface {
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1), 0px 10px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* Floating shadow for interactive elements */
+        .shadow-tactile-floating {
+            box-shadow: 0px 8px 12px rgba(0,0,0,0.15), 0px 16px 24px rgba(0,0,0,0.25);
+        }
+
+        /* Button Glow */
+        .btn-glow:hover {
+            box-shadow: 0 0 15px rgba(195, 244, 0, 0.4);
+        }
+        
+        /* Loading animation */
+        @keyframes pulse-opacity {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-opacity {
+            animation: pulse-opacity 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#31394d",
+                        "on-primary-container": "#556d00",
+                        "surface-container-highest": "#2d3449",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "primary-fixed": "#c3f400",
+                        "on-surface-variant": "#c4c9ac",
+                        "surface-variant": "#2d3449",
+                        "tertiary-fixed": "#d2e5f5",
+                        "secondary": "#bcc7de",
+                        "on-tertiary-fixed-variant": "#374956",
+                        "tertiary": "#ffffff",
+                        "on-tertiary": "#21323e",
+                        "on-background": "#dae2fd",
+                        "inverse-primary": "#506600",
+                        "on-secondary-fixed": "#111c2d",
+                        "tertiary-container": "#d2e5f5",
+                        "primary": "#ffffff",
+                        "surface-dim": "#0b1326",
+                        "outline-variant": "#444933",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#060e20",
+                        "inverse-on-surface": "#283044",
+                        "primary-container": "#c3f400",
+                        "on-primary-fixed": "#161e00",
+                        "on-tertiary-fixed": "#0b1d29",
+                        "surface-tint": "#abd600",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#aeb9d0",
+                        "background": "#0b1326",
+                        "on-primary": "#283500",
+                        "error-container": "#93000a",
+                        "secondary-container": "#3e495d",
+                        "inverse-surface": "#dae2fd",
+                        "surface": "#0b1326",
+                        "on-tertiary-container": "#556774",
+                        "surface-container": "#171f33",
+                        "outline": "#8e9379",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-surface": "#dae2fd",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#222a3d",
+                        "tertiary-fixed-dim": "#b6c9d8",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary": "#263143",
+                        "primary-fixed-dim": "#abd600"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px",
+                        "3xl": "24px" /* Overriding xl/adding 3xl for specific card requirement */
+                    },
+                    "spacing": {
+                        "margin": "32px",
+                        "xs": "4px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "lg": "48px",
+                        "xl": "80px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "body-md": ["Geist"],
+                        "display": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "label-caps": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col items-center justify-center py-xl relative overflow-x-hidden">
+<!-- Abstract Background Elements -->
+<div class="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-surface-container-high rounded-full blur-[120px] opacity-30"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary-fixed rounded-full blur-[150px] opacity-5"></div>
+</div>
+<!-- Onboarding Container -->
+<main class="w-full max-w-[480px] px-margin md:px-0 relative z-10 flex flex-col gap-lg">
+<!-- Header -->
+<header class="text-center flex flex-col items-center gap-sm mb-sm">
+<h1 class="font-display text-display text-on-surface tracking-tight">Forecastly</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Let's get your account set up.</p>
+</header>
+<!-- Sequence Cards -->
+<div class="flex flex-col gap-gutter w-full">
+<!-- Card 1: Create Restaurant (Active/Success State Example) -->
+<section class="bg-surface-container rounded-3xl p-margin shadow-tactile-surface border border-outline-variant/30 flex flex-col gap-md relative overflow-hidden transition-all duration-300 hover:shadow-tactile-floating">
+<!-- Glowing accent edge -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-fixed/50 to-transparent"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-xs">1. Create your restaurant</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">The organization using Forecastly.</p>
+</div>
+<!-- Success Badge (Simulated state) -->
+<div class="bg-primary-fixed/15 text-primary-fixed px-sm py-xs rounded-full flex items-center gap-xs border border-primary-fixed/30 shadow-[0_0_8px_rgba(195,244,0,0.1)]">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-caps text-label-caps tracking-widest">CREATED</span>
+</div>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="restaurant-name">Restaurant Name</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md rounded-lg py-sm px-md focus:outline-none focus:ring-2 focus:ring-primary-fixed/50 focus:border-primary-fixed transition-shadow placeholder:text-on-surface-variant/50" id="restaurant-name" placeholder="Blue Ridge Grill" type="text" value="Blue Ridge Grill"/>
+<!-- Inline Validation Success Icon -->
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 text-primary-fixed pointer-events-none">check</span>
+</div>
+</div>
+<!-- Primary Button (Loading State Example) -->
+<button class="w-full bg-surface-bright border border-outline-variant text-on-surface-variant font-body-md text-body-md py-sm rounded-full flex items-center justify-center gap-sm cursor-not-allowed opacity-80 mt-xs" disabled="" type="button">
+<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+<span>Creating...</span>
+</button>
+</section>
+<!-- Card 2: Add Location (Active/Next Step State) -->
+<section class="bg-surface-container rounded-3xl p-margin shadow-tactile-surface border border-outline-variant/30 flex flex-col gap-md relative transition-all duration-300">
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-xs">2. Add a location</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Sales and forecasts belong to a location.</p>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="location-name">Location Name</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md rounded-lg py-sm px-md focus:outline-none focus:ring-2 focus:ring-primary-fixed/50 focus:border-primary-fixed transition-shadow placeholder:text-on-surface-variant/50" id="location-name" placeholder="Downtown" type="text"/>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="timezone">Timezone</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant text-on-surface font-body-md rounded-lg py-sm pl-md pr-xl appearance-none focus:outline-none focus:ring-2 focus:ring-primary-fixed/50 focus:border-primary-fixed transition-shadow cursor-pointer" id="timezone">
+<option value="America/New_York">America/New_York</option>
+<option value="America/Chicago">America/Chicago</option>
+<option value="America/Denver">America/Denver</option>
+<option value="America/Los_Angeles">America/Los_Angeles</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Primary Action Button -->
+<button class="w-full bg-primary-fixed text-on-primary-fixed font-body-md text-body-md font-semibold py-sm rounded-full mt-xs transition-all duration-200 hover:bg-primary-fixed-dim btn-glow active:scale-[0.98]" type="button">
+                    Create location &amp; continue
+                </button>
+</section>
+</div>
+</main>
+</body></html>

@@ -6,7 +6,10 @@ export function AppHeader() {
   return (
     <header className="border-b">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="font-heading text-lg font-semibold">
+        <Link
+          href="/"
+          className="font-heading text-lg font-semibold tracking-tight text-primary"
+        >
           Forecastly
         </Link>
         <DevUserSwitcher />

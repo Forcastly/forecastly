@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Upload Sales Data - Success</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Geist font import */
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/gh/fontsource/fontsource@main/fonts/variable/geist/files/geist-latin-variable-wghtOnly-normal.woff2') format('woff2');
+            font-weight: 100 900;
+            font-style: normal;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap');
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#abd600",
+                        "secondary-container": "#3e495d",
+                        "surface-container": "#171f33",
+                        "primary-container": "#c3f400",
+                        "on-tertiary-fixed": "#0b1d29",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-tertiary-fixed-variant": "#374956",
+                        "tertiary-fixed-dim": "#b6c9d8",
+                        "surface-container-lowest": "#060e20",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-background": "#dae2fd",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "tertiary": "#ffffff",
+                        "secondary": "#bcc7de",
+                        "inverse-surface": "#dae2fd",
+                        "on-primary": "#283500",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "surface": "#0b1326",
+                        "on-primary-container": "#556d00",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-container": "#556774",
+                        "surface-variant": "#2d3449",
+                        "background": "#0b1326",
+                        "surface-container-high": "#222a3d",
+                        "on-secondary": "#263143",
+                        "on-tertiary": "#21323e",
+                        "tertiary-container": "#d2e5f5",
+                        "surface-tint": "#abd600",
+                        "surface-dim": "#0b1326",
+                        "inverse-primary": "#506600",
+                        "secondary-fixed": "#d8e3fb",
+                        "primary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "on-primary-fixed": "#161e00",
+                        "outline": "#8e9379",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#444933",
+                        "tertiary-fixed": "#d2e5f5",
+                        "primary-fixed": "#c3f400",
+                        "on-surface": "#dae2fd",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "xl": "80px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "lg": "48px",
+                        "margin": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body-lg": ["Geist", "sans-serif"],
+                        "headline-lg": ["Geist", "sans-serif"],
+                        "headline-lg-mobile": ["Geist", "sans-serif"],
+                        "label-caps": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500" }]
+                    },
+                    "boxShadow": {
+                        'soft-surface': '0px 4px 6px rgba(0,0,0,0.1), 0px 10px 15px rgba(0,0,0,0.2)',
+                        'soft-floating': '0px 20px 25px -5px rgba(0,0,0,0.3), 0px 8px 10px -6px rgba(0,0,0,0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md h-screen w-screen overflow-hidden flex flex-col">
+<!-- Top Navigation Bar (Shared Component) -->
+<nav class="w-full top-0 sticky bg-surface dark:bg-surface shadow-sm flex justify-between items-center px-margin py-md z-10">
+<div class="flex items-center gap-md">
+<span class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary">Forecaster Pro</span>
+<div class="hidden md:flex gap-md ml-lg">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed dark:hover:text-primary-fixed transition-colors active:opacity-80 font-body-md text-body-md" href="#">Dashboard</a>
+<a class="text-primary-fixed-dim font-bold border-b-2 border-primary-fixed-dim pb-1 hover:text-primary-fixed dark:hover:text-primary-fixed transition-colors active:opacity-80 font-body-md text-body-md" href="#">Locations</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed dark:hover:text-primary-fixed transition-colors active:opacity-80 font-body-md text-body-md" href="#">Reports</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 text-on-surface focus:ring-2 focus:ring-primary-container font-body-md text-body-md w-64 placeholder:text-on-surface-variant" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-colors p-2 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined" data-icon="notifications" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-colors p-2 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden ml-2 cursor-pointer relative" data-alt="A neo-noir portrait of a confident data analyst, low light environment with subtle green rim lighting, cyber-professional aesthetic, highly detailed features." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAClzxWR0Fr93Q4ykzhzLX_JiSig_By9zduKuPjhIrPbpCTcZh2E8aHKXkAsHKk84gStOCIETZQt31Z6Wb4lkt_RfhLdtH-wWlAku0kkv4DWG-pFwYceE3rpdJsnO3aGtq1qGgPOvm78hIhp5vNIQEu2s2f96oLXltbJ6QLw9jQqPiiaBXcbpiqgoU69-dCiuCfQLPr-z_AEOeSn1_bDf4DUSZH-1y_BAGlbyyhMrF1jTUqhvlBuZQT0g')">
+<!-- Profile Image -->
+</div>
+</div>
+</nav>
+<!-- Background Content (Dimmed Dashboard) -->
+<main class="flex-1 overflow-y-auto px-margin py-lg grid grid-cols-1 md:grid-cols-12 gap-gutter opacity-40 blur-[2px] transition-all duration-300 pointer-events-none">
+<!-- Header Section -->
+<div class="col-span-1 md:col-span-12 flex justify-between items-end mb-lg">
+<div>
+<span class="font-label-caps text-label-caps text-primary-fixed-dim uppercase tracking-wider mb-xs block">Active Region</span>
+<h1 class="font-display text-display text-primary">Location Analytics</h1>
+</div>
+<button class="bg-primary-container text-on-primary-container font-body-md text-body-md px-6 py-3 rounded-full hover:bg-primary-fixed transition-colors font-bold shadow-soft-surface">
+                Upload Data
+            </button>
+</div>
+<!-- Metric Cards -->
+<div class="col-span-1 md:col-span-4 bg-surface-container rounded-lg p-md shadow-soft-surface border border-surface-bright/50">
+<div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">monitoring</span>
+<span class="font-body-md text-body-md">Total Volume</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-primary">142.5k</div>
+<div class="text-primary-fixed-dim font-label-caps text-label-caps mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0;">arrow_upward</span>
+                12.4% vs last week
+            </div>
+</div>
+<div class="col-span-1 md:col-span-4 bg-surface-container rounded-lg p-md shadow-soft-surface border border-surface-bright/50">
+<div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">trending_up</span>
+<span class="font-body-md text-body-md">Forecast Accuracy</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-primary">94.2%</div>
+<div class="text-on-surface-variant font-label-caps text-label-caps mt-2">
+                Stable across all regions
+            </div>
+</div>
+<div class="col-span-1 md:col-span-4 bg-surface-container rounded-lg p-md shadow-soft-surface border border-surface-bright/50">
+<div class="flex items-center gap-sm text-on-surface-variant mb-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">sync</span>
+<span class="font-body-md text-body-md">Last Sync</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-primary">2h ago</div>
+<div class="text-primary-fixed-dim font-label-caps text-label-caps mt-2 flex items-center gap-1">
+                Pending updates
+            </div>
+</div>
+<!-- Main Chart Area -->
+<div class="col-span-1 md:col-span-8 bg-surface-container rounded-lg p-md shadow-soft-surface border border-surface-bright/50 min-h-[400px]">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Revenue Projection</h3>
+<div class="flex gap-2">
+<span class="bg-surface-container-highest px-3 py-1 rounded-full font-label-caps text-label-caps text-on-surface-variant">Weekly</span>
+<span class="bg-primary-container/15 text-primary-fixed-dim px-3 py-1 rounded-full font-label-caps text-label-caps border border-primary-fixed-dim/30">Monthly</span>
+</div>
+</div>
+<!-- Mock Chart Area -->
+<div class="w-full h-64 border-b border-l border-surface-variant relative mt-lg">
+<!-- Grid lines -->
+<div class="absolute w-full h-px bg-surface-variant top-1/4"></div>
+<div class="absolute w-full h-px bg-surface-variant top-2/4"></div>
+<div class="absolute w-full h-px bg-surface-variant top-3/4"></div>
+</div>
+</div>
+<!-- Secondary List -->
+<div class="col-span-1 md:col-span-4 bg-surface-container rounded-lg p-md shadow-soft-surface border border-surface-bright/50">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-md">Top Regions</h3>
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-center p-3 hover:bg-surface-container-high rounded-md transition-colors cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface">North America</span>
+<span class="font-label-caps text-label-caps text-primary-fixed-dim">45%</span>
+</div>
+<div class="flex justify-between items-center p-3 hover:bg-surface-container-high rounded-md transition-colors cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface">Europe</span>
+<span class="font-label-caps text-label-caps text-primary-fixed-dim">32%</span>
+</div>
+<div class="flex justify-between items-center p-3 hover:bg-surface-container-high rounded-md transition-colors cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface">Asia Pacific</span>
+<span class="font-label-caps text-label-caps text-primary-fixed-dim">18%</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Overlay Modal Dialog -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+<!-- Floating Card -->
+<div class="bg-surface-container rounded-lg shadow-soft-floating border border-outline-variant/30 w-full max-w-md p-lg flex flex-col items-center text-center transform scale-100 transition-transform duration-300 relative overflow-hidden">
+<!-- Subtle Glow Effect Behind Icon -->
+<div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-32 h-32 bg-primary-fixed-dim/20 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Success Icon -->
+<div class="w-20 h-20 bg-surface-container-high rounded-full flex items-center justify-center mb-6 border border-surface-bright shadow-inner relative z-10">
+<span class="material-symbols-outlined text-[48px] text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Content -->
+<h2 class="font-headline-lg text-headline-lg text-primary mb-sm relative z-10">Upload successful</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg relative z-10">
+                Imported 245 rows. Forecast updated.
+            </p>
+<!-- Actions -->
+<div class="w-full relative z-10">
+<button class="w-full bg-primary-container text-on-primary-fixed-variant font-body-lg text-body-lg font-bold py-3 px-6 rounded-full hover:bg-primary-fixed hover:shadow-lg hover:shadow-primary-fixed-dim/20 transition-all duration-200">
+                    Done
+                </button>
+</div>
+</div>
+</div>
+</body></html>

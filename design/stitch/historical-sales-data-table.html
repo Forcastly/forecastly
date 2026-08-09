@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Historical Sales - Forecastly</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Design System Typography Links (Assuming Geist is available or falling back to sans) -->
+<!-- Assuming Geist font is loaded or system fallback -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "on-tertiary-fixed-variant": "#374956",
+                        "surface-container-high": "#222a3d",
+                        "tertiary-container": "#d2e5f5",
+                        "inverse-surface": "#dae2fd",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#abd600",
+                        "on-primary": "#283500",
+                        "on-primary-container": "#556d00",
+                        "primary-fixed": "#c3f400",
+                        "tertiary-fixed": "#d2e5f5",
+                        "on-primary-fixed": "#161e00",
+                        "secondary": "#bcc7de",
+                        "on-tertiary-container": "#556774",
+                        "on-tertiary": "#21323e",
+                        "tertiary-fixed-dim": "#b6c9d8",
+                        "secondary-container": "#3e495d",
+                        "tertiary": "#ffffff",
+                        "on-background": "#dae2fd",
+                        "outline": "#8e9379",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-tertiary-fixed": "#0b1d29",
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#2d3449",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "secondary-fixed": "#d8e3fb",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-secondary-container": "#aeb9d0",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "surface": "#0b1326",
+                        "surface-variant": "#2d3449",
+                        "surface-tint": "#abd600",
+                        "on-surface": "#dae2fd",
+                        "outline-variant": "#444933",
+                        "on-error-container": "#ffdad6",
+                        "inverse-primary": "#506600",
+                        "surface-container": "#171f33",
+                        "primary-container": "#c3f400",
+                        "background": "#0b1326",
+                        "primary": "#ffffff",
+                        "on-secondary": "#263143",
+                        "surface-dim": "#0b1326"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "base": "8px",
+                        "margin": "32px",
+                        "md": "24px",
+                        "lg": "48px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Geist", "sans-serif"],
+                        "label-caps": ["JetBrains Mono", "monospace"],
+                        "display": ["Geist", "sans-serif"],
+                        "headline-lg": ["Geist", "sans-serif"],
+                        "headline-lg-mobile": ["Geist", "sans-serif"],
+                        "body-lg": ["Geist", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Shared Components JSON overrides & specific structural commands */
+        .shadow-soft { box-shadow: 0px 4px 6px rgba(0,0,0,0.1), 0px 10px 15px rgba(0,0,0,0.2); }
+        .shadow-float { box-shadow: 0px 8px 12px rgba(0,0,0,0.15), 0px 20px 25px rgba(0,0,0,0.3); }
+        /* Prevent scrollbar shift on sticky header */
+        .table-container { scrollbar-gutter: stable; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col relative overflow-x-hidden">
+<!-- Top Navigation (Task-Focused, Nav Shell Suppressed) -->
+<header class="w-full px-margin-desktop py-md max-w-[1100px] mx-auto z-10 pt-lg">
+<a class="inline-flex items-center text-on-surface-variant hover:text-electric-lime transition-colors duration-200 mb-md group" href="#">
+<span class="material-symbols-outlined text-sm mr-2 group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<span class="font-label-caps text-label-caps uppercase">Dashboard</span>
+</a>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<h1 class="font-display text-display text-on-surface">Historical sales</h1>
+</div>
+<!-- Controls: Date Range Filter -->
+<div class="relative">
+<button class="bg-surface-container-high border border-outline-variant hover:border-outline text-on-surface py-2 px-4 rounded-full flex items-center gap-2 shadow-soft transition-all duration-200 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-primary-container">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container" style="font-variation-settings: 'FILL' 0;">calendar_today</span>
+<span class="font-body-md text-body-md">Aug 1 – Aug 31, 2024</span>
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-grow w-full px-margin-desktop max-w-[1100px] mx-auto pb-xl flex flex-col gap-lg z-10">
+<!-- Summary Statistics Strip -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter w-full">
+<!-- Stat Tile 1 -->
+<div class="bg-surface-container border border-outline-variant rounded-DEFAULT p-md shadow-soft flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">Total quantity</span>
+<span class="font-headline-lg md:font-headline-lg-mobile text-headline-lg md:text-headline-lg-mobile text-primary-container">1,245</span>
+</div>
+<!-- Stat Tile 2 -->
+<div class="bg-surface-container border border-outline-variant rounded-DEFAULT p-md shadow-soft flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">Total revenue</span>
+<span class="font-headline-lg md:font-headline-lg-mobile text-headline-lg md:text-headline-lg-mobile text-primary-container">$34,210.50</span>
+</div>
+<!-- Stat Tile 3 -->
+<div class="bg-surface-container border border-outline-variant rounded-DEFAULT p-md shadow-soft flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">Days with data</span>
+<span class="font-headline-lg md:font-headline-lg-mobile text-headline-lg md:text-headline-lg-mobile text-on-surface">31</span>
+</div>
+<!-- Stat Tile 4 -->
+<div class="bg-surface-container border border-outline-variant rounded-DEFAULT p-md shadow-soft flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">Date range</span>
+<span class="font-headline-lg md:font-headline-lg-mobile text-headline-lg md:text-headline-lg-mobile text-on-surface">August</span>
+</div>
+</section>
+<!-- Data Table Section -->
+<section class="bg-surface-container-high rounded-lg border border-outline-variant shadow-soft overflow-hidden flex flex-col">
+<div class="overflow-x-auto table-container max-h-[600px] overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-high z-10 border-b border-outline-variant shadow-sm">
+<tr>
+<th class="py-sm px-md font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">Business date</th>
+<th class="py-sm px-md font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap">Item name</th>
+<th class="py-sm px-md font-label-caps text-label-caps text-on-surface-variant uppercase text-right whitespace-nowrap">Quantity</th>
+<th class="py-sm px-md font-label-caps text-label-caps text-on-surface-variant uppercase text-right whitespace-nowrap">Revenue</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant/50">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-variant transition-colors duration-150">
+<td class="py-sm px-md whitespace-nowrap">2024-08-01</td>
+<td class="py-sm px-md">Espresso Roast 1kg</td>
+<td class="py-sm px-md text-right tabular-nums">42</td>
+<td class="py-sm px-md text-right tabular-nums text-primary-fixed-dim">$1,260.00</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-variant transition-colors duration-150">
+<td class="py-sm px-md whitespace-nowrap">2024-08-01</td>
+<td class="py-sm px-md">Oat Milk 1L</td>
+<td class="py-sm px-md text-right tabular-nums">18</td>
+<td class="py-sm px-md text-right tabular-nums text-primary-fixed-dim">$72.00</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-variant transition-colors duration-150">
+<td class="py-sm px-md whitespace-nowrap">2024-08-01</td>
+<td class="py-sm px-md">Ceramic Mug - Branded</td>
+<td class="py-sm px-md text-right tabular-nums">2</td>
+<td class="py-sm px-md text-right tabular-nums text-primary-fixed-dim">$45.00</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-variant transition-colors duration-150">
+<td class="py-sm px-md whitespace-nowrap">2024-08-02</td>
+<td class="py-sm px-md">Espresso Roast 1kg</td>
+<td class="py-sm px-md text-right tabular-nums">38</td>
+<td class="py-sm px-md text-right tabular-nums text-primary-fixed-dim">$1,140.00</td>
+</tr>
+<!-- Row 5 (Missing Data Example) -->
+<tr class="hover:bg-surface-variant transition-colors duration-150">
+<td class="py-sm px-md whitespace-nowrap">2024-08-02</td>
+<td class="py-sm px-md">Seasonal Blend 250g</td>
+<td class="py-sm px-md text-right tabular-nums">12</td>
+<td class="py-sm px-md text-right tabular-nums text-on-surface-variant">—</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-variant transition-colors duration-150">
+<td class="py-sm px-md whitespace-nowrap">2024-08-03</td>
+<td class="py-sm px-md">Espresso Roast 1kg</td>
+<td class="py-sm px-md text-right tabular-nums">45</td>
+<td class="py-sm px-md text-right tabular-nums text-primary-fixed-dim">$1,350.00</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-surface-variant transition-colors duration-150">
+<td class="py-sm px-md whitespace-nowrap">2024-08-03</td>
+<td class="py-sm px-md">Almond Milk 1L</td>
+<td class="py-sm px-md text-right tabular-nums">10</td>
+<td class="py-sm px-md text-right tabular-nums text-primary-fixed-dim">$45.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Controls -->
+<div class="border-t border-outline-variant p-md flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface-container-high rounded-b-lg">
+<span class="font-body-md text-body-md text-on-surface-variant text-sm">Showing 1 to 7 of 128 results</span>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-label-caps text-label-caps uppercase" disabled="">
+                        Prev
+                    </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant text-on-surface hover:text-primary-container hover:border-primary-container transition-colors font-label-caps text-label-caps uppercase">
+                        Next
+                    </button>
+</div>
+</div>
+</section>
+</main>
+</body></html>

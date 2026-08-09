@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Upload Sales Data - Progress</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#abd600",
+                        "secondary-container": "#3e495d",
+                        "surface-container": "#171f33",
+                        "primary-container": "#c3f400",
+                        "on-tertiary-fixed": "#0b1d29",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-tertiary-fixed-variant": "#374956",
+                        "tertiary-fixed-dim": "#b6c9d8",
+                        "surface-container-lowest": "#060e20",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-background": "#dae2fd",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "tertiary": "#ffffff",
+                        "secondary": "#bcc7de",
+                        "inverse-surface": "#dae2fd",
+                        "on-primary": "#283500",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "surface": "#0b1326",
+                        "on-primary-container": "#556d00",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-container": "#556774",
+                        "surface-variant": "#2d3449",
+                        "background": "#0b1326",
+                        "surface-container-high": "#222a3d",
+                        "on-secondary": "#263143",
+                        "on-tertiary": "#21323e",
+                        "tertiary-container": "#d2e5f5",
+                        "surface-tint": "#abd600",
+                        "surface-dim": "#0b1326",
+                        "inverse-primary": "#506600",
+                        "secondary-fixed": "#d8e3fb",
+                        "primary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "on-primary-fixed": "#161e00",
+                        "outline": "#8e9379",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#444933",
+                        "tertiary-fixed": "#d2e5f5",
+                        "primary-fixed": "#c3f400",
+                        "on-surface": "#dae2fd",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "2rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "xl": "80px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "lg": "48px",
+                        "margin": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Geist", "sans-serif"],
+                        "display": ["Geist", "sans-serif"],
+                        "body-lg": ["Geist", "sans-serif"],
+                        "headline-lg": ["Geist", "sans-serif"],
+                        "headline-lg-mobile": ["Geist", "sans-serif"],
+                        "label-caps": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500" }]
+                    },
+                    "boxShadow": {
+                        "soft-multi": "0px 4px 6px rgba(0,0,0,0.1), 0px 10px 15px rgba(0,0,0,0.2)",
+                        "floating": "0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)"
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-active {
+            box-shadow: 0 0 12px rgba(171, 214, 0, 0.3);
+        }
+        .bg-pattern {
+            background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen antialiased overflow-hidden relative">
+<!-- Dimmed Background Context (Location Dashboard) -->
+<div class="absolute inset-0 z-0 opacity-40 filter blur-sm pointer-events-none flex flex-col">
+<!-- Mock Nav -->
+<header class="bg-surface shadow-sm w-full top-0 sticky flex justify-between items-center px-margin py-md z-10 border-b border-surface-variant">
+<div class="font-headline-lg text-primary font-bold">Forecaster Pro</div>
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-primary-fixed-dim text-2xl">notifications</span>
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, circular avatar portrait of a data analyst in a dark neo-noir setting. The lighting is low and moody with a hint of electric lime rim light. The overall aesthetic matches the dark, technical, tactile minimalist UI of the application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1hsl76gg82c3leiIkRfAPpx-zsjKrB-4RWNXaNLiuS9YFM0nCOHknT0DQTmvEqqGwrLp29QiELBmdGkzBZ3ygb2dwmUA8h_ynh4ATp2lgYNd2FA3xKwTSL8-OYvFjqSOv9Y_UbW_bJmwe0jWyyLaDwHfZP5wlhiXuNwapHu6bfwQFz7gp20OdP6B_rVkcknKXNwX4oprQsB6bKsUpEo132aTwttvBHs4DfbnPvo0qQnaOQb-QyAay4Q"/>
+</div>
+</header>
+<!-- Mock Dashboard Content -->
+<main class="flex-1 p-margin bg-pattern">
+<h1 class="font-display text-primary mb-lg">Location Dashboard</h1>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-[#1E293B] rounded-lg p-md shadow-soft-multi border border-[#334155] h-64"></div>
+<div class="bg-[#1E293B] rounded-lg p-md shadow-soft-multi border border-[#334155] h-64 md:col-span-2"></div>
+<div class="bg-[#1E293B] rounded-lg p-md shadow-soft-multi border border-[#334155] h-48 md:col-span-3"></div>
+</div>
+</main>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+<!-- Upload Progress Modal -->
+<div aria-labelledby="modal-title" aria-modal="true" class="bg-[#1E293B] w-full max-w-md rounded-lg shadow-floating border border-white/10 relative overflow-hidden flex flex-col" role="dialog">
+<!-- Header -->
+<div class="px-md pt-md pb-sm border-b border-surface-variant/50">
+<h2 class="font-headline-lg-mobile text-primary mb-xs" id="modal-title">Upload sales data</h2>
+<p class="font-body-md text-on-surface-variant">Processing file contents for analysis.</p>
+</div>
+<!-- Content Area (Progress) -->
+<div class="p-md flex flex-col gap-md">
+<!-- File Info & Status -->
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-sm">
+<div class="bg-surface-container p-sm rounded-lg border border-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">insert_drive_file</span>
+</div>
+<div>
+<p class="font-body-md text-on-background font-semibold truncate w-48" title="sales_data_august.csv">sales_data_august.csv</p>
+<p class="font-label-caps text-on-surface-variant flex items-center gap-xs mt-1">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim animate-pulse"></span>
+                                Uploading...
+                            </p>
+</div>
+</div>
+<div class="font-body-lg text-primary-fixed-dim font-bold">
+                        65%
+                    </div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-container rounded-full h-3 overflow-hidden border border-[#334155] relative">
+<!-- Base Track -->
+<div class="absolute inset-0 bg-black/20"></div>
+<!-- Fill -->
+<div class="bg-primary-fixed-dim h-full rounded-full transition-all duration-300 ease-out glow-active relative" style="width: 65%;">
+<!-- Shimmer Effect inside progress -->
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+</div>
+</div>
+<div class="text-right font-label-caps text-on-surface-variant">
+                    2.4 MB / 3.7 MB
+                </div>
+</div>
+<!-- Footer Actions -->
+<div class="px-md py-sm border-t border-surface-variant/50 bg-surface-container-lowest flex justify-end">
+<button class="px-md py-sm rounded-full border border-outline hover:bg-surface-variant text-on-background font-body-md transition-colors active:opacity-80">
+                    Cancel
+                </button>
+</div>
+</div>
+</div>
+<style>
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</body></html>

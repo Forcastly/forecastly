@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Upload Sales Data - Forecaster Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#abd600",
+                        "secondary-container": "#3e495d",
+                        "surface-container": "#171f33",
+                        "primary-container": "#c3f400",
+                        "on-tertiary-fixed": "#0b1d29",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-tertiary-fixed-variant": "#374956",
+                        "tertiary-fixed-dim": "#b6c9d8",
+                        "surface-container-lowest": "#060e20",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-background": "#dae2fd",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "tertiary": "#ffffff",
+                        "secondary": "#bcc7de",
+                        "inverse-surface": "#dae2fd",
+                        "on-primary": "#283500",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "surface": "#0b1326",
+                        "on-primary-container": "#556d00",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary-container": "#556774",
+                        "surface-variant": "#2d3449",
+                        "background": "#0b1326",
+                        "surface-container-high": "#222a3d",
+                        "on-secondary": "#263143",
+                        "on-tertiary": "#21323e",
+                        "tertiary-container": "#d2e5f5",
+                        "surface-tint": "#abd600",
+                        "surface-dim": "#0b1326",
+                        "inverse-primary": "#506600",
+                        "secondary-fixed": "#d8e3fb",
+                        "primary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "on-primary-fixed": "#161e00",
+                        "outline": "#8e9379",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#444933",
+                        "tertiary-fixed": "#d2e5f5",
+                        "primary-fixed": "#c3f400",
+                        "on-surface": "#dae2fd",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "md": "24px",
+                        "xs": "4px",
+                        "xl": "80px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "lg": "48px",
+                        "margin": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Geist"],
+                        "display": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-caps": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .neo-shadow-modal {
+            box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.5), 0px 4px 6px -4px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+        .neo-dropzone-active {
+            border-color: #c3f400;
+            background-color: rgba(195, 244, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen relative overflow-hidden">
+<!-- Background Screen (Dimmed) -->
+<div class="absolute inset-0 z-0 opacity-40 pointer-events-none filter blur-sm">
+<img alt="Dashboard Background" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUgSQa6Giungnav20hmmk9uYbl-I4IKs3-7IWFAryZGWApxEHmmDQpEeV7fevvof2iRmO8FgCgeDYQ5z9KzN1ZSDFWWZ4VCgRdz7t_xNKUpNE6DJCBiWXxaO56hBa37aHOhsv4pHIUbccBIBLPvEjFB8r1z4aOkMYYSqKhRjGMI6Qh-aK9Mx8NDOy0KS7OyoKlsPVxpPjRFBcrve6o3FfbqQfqACZC_ac-tsqgO8ZaEpwhYiCx9f49KA"/>
+</div>
+<!-- Modal Overlay -->
+<div class="absolute inset-0 z-10 flex items-center justify-center p-margin bg-background/60 backdrop-blur-md">
+<!-- Modal Container -->
+<div class="bg-surface-container rounded-lg neo-shadow-modal w-full max-w-lg p-margin flex flex-col gap-md relative">
+<!-- Close Icon -->
+<button class="absolute top-md right-md text-on-surface-variant hover:text-on-surface transition-colors active:opacity-80">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">close</span>
+</button>
+<!-- Header -->
+<div class="flex flex-col gap-base">
+<h2 class="font-headline-lg text-headline-lg text-primary">Upload sales data</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Upload a CSV with columns: date, item_name, quantity, and optional revenue.</p>
+</div>
+<!-- Dropzone -->
+<div class="border-2 border-dashed border-outline-variant rounded-DEFAULT bg-surface flex flex-col items-center justify-center p-lg gap-sm transition-all duration-300 hover:border-primary-fixed-dim hover:bg-surface-container-high cursor-pointer group" id="dropzone">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mb-sm group-hover:bg-primary-container/10 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-4xl group-hover:text-primary-fixed-dim transition-colors" data-icon="upload_file" style="font-variation-settings: 'FILL' 0;">upload_file</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface"><span class="font-bold text-primary-fixed-dim">Click to Choose file</span> or drag and drop</p>
+<p class="font-label-caps text-label-caps text-on-surface-variant">CSV files only (Max. 10MB)</p>
+<input accept=".csv" class="hidden" id="file-upload" type="file"/>
+</div>
+<!-- Actions -->
+<div class="flex justify-end gap-sm mt-sm">
+<button class="px-md py-sm rounded-full font-label-caps text-label-caps border border-outline text-secondary hover:bg-surface-container-high hover:text-on-surface transition-colors active:opacity-80">
+                    Cancel
+                </button>
+<button class="px-md py-sm rounded-full font-label-caps text-label-caps bg-primary-fixed text-on-primary-fixed hover:bg-primary-container transition-colors shadow-[0_0_10px_rgba(195,244,0,0.3)] hover:shadow-[0_0_15px_rgba(195,244,0,0.5)] active:opacity-80">
+                    Upload
+                </button>
+</div>
+</div>
+</div>
+<script>
+        // Simple drag and drop visual feedback
+        const dropzone = document.getElementById('dropzone');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropzone.classList.add('neo-dropzone-active');
+        }
+
+        function unhighlight(e) {
+            dropzone.classList.remove('neo-dropzone-active');
+        }
+        
+        // Handle click to open file dialog
+        dropzone.addEventListener('click', () => {
+             document.getElementById('file-upload').click();
+        });
+    </script>
+</body></html>

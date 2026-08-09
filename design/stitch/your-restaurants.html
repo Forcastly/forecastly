@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Your Restaurants - Forecastly</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary-fixed-dim": "#abd600",
+                "on-background": "#dae2fd",
+                "inverse-primary": "#506600",
+                "secondary-container": "#3e495d",
+                "on-primary-fixed": "#161e00",
+                "surface-dim": "#0b1326",
+                "on-surface-variant": "#c4c9ac",
+                "tertiary-fixed": "#d2e5f5",
+                "secondary-fixed": "#d8e3fb",
+                "on-primary-container": "#556d00",
+                "inverse-surface": "#dae2fd",
+                "secondary-fixed-dim": "#bcc7de",
+                "surface-container-lowest": "#060e20",
+                "primary-fixed": "#c3f400",
+                "error-container": "#93000a",
+                "primary-container": "#c3f400",
+                "on-secondary": "#263143",
+                "on-error": "#690005",
+                "on-secondary-fixed": "#111c2d",
+                "outline-variant": "#444933",
+                "on-secondary-container": "#aeb9d0",
+                "on-tertiary-container": "#556774",
+                "on-secondary-fixed-variant": "#3c475a",
+                "surface-container-low": "#131b2e",
+                "on-tertiary": "#21323e",
+                "surface-bright": "#31394d",
+                "surface-container-highest": "#2d3449",
+                "surface-container-high": "#222a3d",
+                "background": "#0b1326",
+                "on-tertiary-fixed-variant": "#374956",
+                "on-primary": "#283500",
+                "on-surface": "#dae2fd",
+                "tertiary-container": "#d2e5f5",
+                "on-primary-fixed-variant": "#3c4d00",
+                "tertiary": "#ffffff",
+                "surface-variant": "#2d3449",
+                "secondary": "#bcc7de",
+                "on-tertiary-fixed": "#0b1d29",
+                "inverse-on-surface": "#283044",
+                "tertiary-fixed-dim": "#b6c9d8",
+                "on-error-container": "#ffdad6",
+                "surface-tint": "#abd600",
+                "outline": "#8e9379",
+                "surface-container": "#171f33",
+                "surface": "#0b1326",
+                "error": "#ffb4ab",
+                "primary": "#ffffff"
+        },
+        "borderRadius": {
+                "DEFAULT": "1rem",
+                "lg": "2rem",
+                "xl": "3rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "lg": "48px",
+                "gutter": "24px",
+                "base": "8px",
+                "md": "24px",
+                "xl": "80px",
+                "sm": "12px",
+                "xs": "4px",
+                "margin": "32px"
+        },
+        "fontFamily": {
+                "body-md": [
+                        "Geist"
+                ],
+                "display": [
+                        "Geist"
+                ],
+                "body-lg": [
+                        "Geist"
+                ],
+                "headline-lg-mobile": [
+                        "Geist"
+                ],
+                "headline-lg": [
+                        "Geist"
+                ],
+                "label-caps": [
+                        "JetBrains Mono"
+                ]
+        },
+        "fontSize": {
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "1.6",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display": [
+                        "48px",
+                        {
+                                "lineHeight": "1.1",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "1.6",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "1.2",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "1.2",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-caps": [
+                        "12px",
+                        {
+                                "lineHeight": "1.0",
+                                "letterSpacing": "0.1em",
+                                "fontWeight": "500"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-surface-container-highest">
+<div class="flex justify-between items-center h-16 px-margin max-w-[1100px] mx-auto">
+<div class="flex items-center gap-base">
+<img alt="Forecastly Logo" class="h-8 w-8 rounded-full border border-surface-container-highest bg-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrV2pCfVsmHQ2wB2m19IMWBKVL7gBx5t8J8WEoqma-ldZs0Xo4U4pkMFgiBwAf48FC2RLzcymot9qVgFEcNXn78ftTUaamC19ZeT94HGBOh7TZ4Y6FA0BmRFJsQi4lyKPmjCxoQdQVjdWrk4ehqJ7On4FPfgQ_Ezbw9NrTzHRt6jUlUOZyTvvYbuLGJP3tBXgF8-Is11iKaSBqiX0TcGKocsEqhbMqy6-kXPTFxV2UHiJmmpFSPa6IRw"/>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary-fixed tracking-tight">Forecastly</span>
+</div>
+<nav class="hidden md:flex gap-gutter h-full">
+<a class="h-full flex items-center text-primary-fixed border-b-2 border-primary-fixed pb-1 hover:text-primary-fixed transition-colors duration-200" href="#">Dashboard</a>
+</nav>
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant hover:text-primary-fixed transition-colors duration-200 active:scale-95 transition-transform" data-icon="notifications">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-colors duration-200 active:scale-95 transition-transform" data-icon="settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="User Account Avatar" class="h-8 w-8 rounded-full border border-surface-container-highest object-cover" data-alt="A cinematic, high-contrast headshot of a confident executive against a dark neon background. The lighting is harsh and directional, emphasizing strength and performance. Moody shadows contrast with a sharp, focused expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvpkrZ9b80zoLQI-m7D8R0Q8dCLm_Ecrs4fwDFIiR3-_KspDhW53y2CFS_QGt94sBTVIu4rVlpQxrvYtoaKoxeD2ORHgZr9h8kDwkdVdmPalNxoAs1R96VbLeSf46tuXjJayQmwI-Uc9m-PokX_ee8lpGLWPOjpqLH-mQRI89JWfqjqnXjVDyW9TFd8IJxTxWRXQHGGX6IwIrnIqezL99MH2iKqnjB-rpQFonbBDd-EiQ7sg4Pa9KLag"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow pt-[120px] pb-xl px-margin md:px-margin max-w-[1280px] mx-auto w-full">
+<header class="flex flex-col md:flex-row md:items-center justify-between mb-lg gap-md">
+<h1 class="font-display text-display text-on-surface">Your restaurants</h1>
+<button class="bg-surface-container text-on-surface border border-outline-variant font-body-md rounded-full px-[24px] py-[12px] hover:bg-surface-container-high hover:border-outline transition-all active:scale-95 flex items-center gap-sm w-fit shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">add</span>
+                New restaurant
+            </button>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Card 1 -->
+<article class="bg-surface-container rounded-[24px] border border-surface-container-highest p-lg flex flex-col hover:border-outline transition-all group relative overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+<div class="absolute top-0 right-0 w-[160px] h-[160px] bg-primary-fixed/5 rounded-bl-full -z-10 group-hover:bg-primary-fixed/10 transition-colors"></div>
+<div class="flex justify-between items-start mb-md">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface leading-tight mb-xs">The Burger Shack</h2>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">3 locations</p>
+</div>
+<span class="bg-surface-container-high text-on-surface font-label-caps text-label-caps px-[12px] py-[6px] rounded-full border border-surface-container-highest">Owner</span>
+</div>
+<div class="mt-auto pt-md border-t border-surface-container-highest">
+<ul class="flex flex-col gap-[4px]">
+<li class="py-[12px] px-[16px] flex justify-between items-center group/item hover:bg-surface-container-high rounded-[12px] transition-colors -mx-[16px]">
+<span class="font-body-lg text-body-lg text-on-surface">Downtown</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant bg-surface-container-lowest px-[8px] py-[4px] rounded-[6px] border border-surface-container-highest">EST</span>
+</li>
+<li class="py-[12px] px-[16px] flex justify-between items-center group/item hover:bg-surface-container-high rounded-[12px] transition-colors -mx-[16px]">
+<span class="font-body-lg text-body-lg text-on-surface">Uptown</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant bg-surface-container-lowest px-[8px] py-[4px] rounded-[6px] border border-surface-container-highest">EST</span>
+</li>
+<li class="py-[12px] px-[16px] flex justify-between items-center group/item hover:bg-surface-container-high rounded-[12px] transition-colors -mx-[16px]">
+<span class="font-body-lg text-body-lg text-on-surface">Beachside</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant bg-surface-container-lowest px-[8px] py-[4px] rounded-[6px] border border-surface-container-highest">PST</span>
+</li>
+</ul>
+</div>
+<div class="mt-md self-end opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary-fixed font-body-md flex items-center gap-sm hover:underline underline-offset-4">
+                        Manage <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container rounded-[24px] border border-surface-container-highest p-lg flex flex-col hover:border-outline transition-all group relative overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+<div class="absolute top-0 right-0 w-[160px] h-[160px] bg-surface-container-highest/5 rounded-bl-full -z-10 group-hover:bg-surface-container-highest/10 transition-colors"></div>
+<div class="flex justify-between items-start mb-md">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface leading-tight mb-xs">Pasta Palace</h2>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">No locations yet</p>
+</div>
+<span class="bg-surface-container-high text-on-surface font-label-caps text-label-caps px-[12px] py-[6px] rounded-full border border-surface-container-highest">Member</span>
+</div>
+<div class="mt-auto pt-md border-t border-surface-container-highest flex-grow flex items-center justify-center min-h-[160px]">
+<div class="text-center">
+<span class="material-symbols-outlined text-[32px] text-on-surface-variant mb-[12px] block">location_off</span>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[240px] mx-auto text-center">Awaiting location assignment from Owner.</p>
+</div>
+</div>
+<div class="mt-md self-end opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant font-body-md flex items-center gap-sm hover:text-on-surface transition-colors">
+                        View Details <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</article>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-background w-full py-lg border-t border-surface-container-highest mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin max-w-[1100px] mx-auto gap-md">
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider">Forecastly</span>
+<div class="flex gap-[24px] font-body-md text-[14px]">
+<a class="text-on-surface-variant hover:text-primary-fixed transition-colors" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary-fixed transition-colors" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary-fixed transition-colors" href="#">Contact Support</a>
+</div>
+<span class="font-body-md text-[14px] text-on-surface-variant">© 2024 Forecastly AI. All rights reserved.</span>
+</div>
+</footer>
+</body></html>

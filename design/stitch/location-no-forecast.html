@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Forecastly - Downtown Dashboard</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#bcc7de",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#abd600",
+                        "on-surface-variant": "#c4c9ac",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed": "#111c2d",
+                        "surface-container-highest": "#2d3449",
+                        "background": "#0b1326",
+                        "secondary-fixed": "#d8e3fb",
+                        "surface-bright": "#31394d",
+                        "inverse-on-surface": "#283044",
+                        "on-surface": "#dae2fd",
+                        "on-primary-container": "#556d00",
+                        "on-secondary": "#263143",
+                        "on-tertiary": "#21323e",
+                        "on-error": "#690005",
+                        "surface-container-high": "#222a3d",
+                        "on-tertiary-fixed": "#0b1d29",
+                        "on-primary-fixed": "#161e00",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "inverse-primary": "#506600",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#444933",
+                        "outline": "#8e9379",
+                        "surface-tint": "#abd600",
+                        "surface-variant": "#2d3449",
+                        "on-background": "#dae2fd",
+                        "tertiary-fixed": "#d2e5f5",
+                        "on-tertiary-fixed-variant": "#374956",
+                        "inverse-surface": "#dae2fd",
+                        "tertiary-container": "#d2e5f5",
+                        "tertiary": "#ffffff",
+                        "surface-container": "#171f33",
+                        "error": "#ffb4ab",
+                        "primary-container": "#c3f400",
+                        "secondary-container": "#3e495d",
+                        "surface": "#0b1326",
+                        "secondary": "#bcc7de",
+                        "surface-dim": "#0b1326",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-primary": "#283500",
+                        "primary-fixed": "#c3f400",
+                        "tertiary-fixed-dim": "#b6c9d8",
+                        "primary": "#ffffff",
+                        "surface-container-lowest": "#060e20",
+                        "on-tertiary-container": "#556774",
+                        "on-primary-fixed-variant": "#3c4d00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "48px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "base": "8px",
+                        "md": "24px",
+                        "gutter": "24px",
+                        "margin": "32px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["JetBrains Mono"],
+                        "body-lg": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "display": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "body-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Kinetic Neo-Noir Specific Styles */
+        .shadow-tactile-surface {
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1), 0px 10px 15px rgba(0, 0, 0, 0.2);
+        }
+        .shadow-tactile-floating {
+            box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.15), 0px 20px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Material Symbols Setup */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Global TopAppBar (From JSON) -->
+<header class="bg-deep-obsidian text-electric-lime font-headline-md text-headline-md fixed top-0 w-full z-50 border-b border-muted-grey flat no shadows hover:text-electric-lime transition-colors duration-200 active:scale-95 transition-transform">
+<div class="flex justify-between items-center h-16 px-margin-desktop max-w-[1100px] mx-auto w-full px-margin">
+<div class="font-headline-md text-headline-md text-electric-lime uppercase tracking-tight">
+                Forecastly
+            </div>
+<div class="flex items-center gap-md">
+<button aria-label="notifications" class="text-on-surface-variant hover:text-electric-lime transition-colors p-sm rounded-full hover:bg-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button aria-label="settings" class="text-on-surface-variant hover:text-electric-lime transition-colors p-sm rounded-full hover:bg-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary-container">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant bg-surface-container ml-sm">
+<img alt="User Account Avatar" class="w-full h-full object-cover" data-alt="A moody, high-contrast digital portrait of a user avatar in a neo-noir style, lit by soft green neon rim light against a dark slate background. The aesthetic is clean, technical, and slightly mysterious." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAodzTWs_ctgJBXrBg6P7Ip2LIJX3n4QJQy0aC2LfFCBHpbEaK6c6dJKj3QNt51TC98d3Gn8eLnT4NSt_4i1KpKaCnoY70G3DJ5lbJFWZ11qCjHN6FmOE-EkrheaoqB0DEfkKzTTcpZlxg_MB5PzJ81EXkEOdeCYo3F19E0EZDuAlHjpTn4qu1fjRexDDpr2J4WF-hU-a3t12JaWpPMR7hEVgmEV9fu4DsH1SgttHg3PvUd5XgtjuAaQg"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow pt-24 pb-xl px-margin max-w-[1100px] w-full mx-auto flex flex-col">
+<!-- Local Dashboard Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-lg gap-md border-b border-surface-variant pb-md">
+<div>
+<a class="inline-flex items-center text-on-surface-variant hover:text-primary transition-colors mb-sm font-label-caps text-label-caps group" href="#">
+<span class="material-symbols-outlined text-[16px] mr-xs group-hover:-translate-x-1 transition-transform">arrow_left</span>
+                    Restaurants
+                </a>
+<h1 class="font-display text-display text-on-background">Downtown</h1>
+</div>
+<div>
+<button class="bg-primary text-on-primary font-label-caps text-label-caps rounded-full px-md py-sm inline-flex items-center justify-center hover:bg-primary-fixed hover:shadow-[0_0_15px_rgba(195,244,0,0.3)] transition-all duration-300">
+<span class="material-symbols-outlined text-[18px] mr-sm">upload_file</span>
+                    Upload sales CSV
+                </button>
+</div>
+</div>
+<!-- Empty State Container -->
+<div class="flex-grow flex items-center justify-center py-xl">
+<!-- Empty State Card (Tactile Surface) -->
+<div class="bg-surface-container border border-surface-variant rounded-lg p-xl flex flex-col items-center text-center max-w-lg w-full shadow-tactile-surface transform transition-transform hover:-translate-y-1 duration-500">
+<!-- Illustration Placeholder -->
+<div class="w-48 h-48 mb-lg rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant/30 flex items-center justify-center shadow-inner relative group">
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+<div class="w-full h-full bg-cover bg-center" data-alt="A stylized, minimalist 3D illustration of a bar chart indicating upward growth, rendered in a dark neo-noir aesthetic. The chart bars are made of frosted dark glass with glowing, electric lime edges, resting on a matte slate surface in low-light studio conditions." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCnXiDzIcdMw82Kv7ZRSbO87Dwi7rEqTy7alsA23t5nZWjCQ2AwbOMul9OW409VHOz7rRiL-iDLjLcIK5P3HOqmVWoJ2BxXS67fcpn5pAd4yov560o2esqhf6Ps8zlVWhoslqS-bJeutMEpLQBiFlfEZSfRreFR3DlAj8abP0EJkDl_FgzTrn0f2sIUE3OyuRO96_ylHarD67A5j_T-Msxy8BcFrZkldEUJQNtLHafqbdniyLls7TWlsw')"></div>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-sm">No forecast yet</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-lg max-w-sm">
+                    Upload a sales CSV to generate a 7-day forecast. Our engine needs historical data to begin predicting trends.
+                </p>
+<button class="bg-primary text-on-primary font-label-caps text-label-caps rounded-full px-lg py-sm inline-flex items-center justify-center hover:bg-primary-fixed hover:shadow-[0_0_20px_rgba(195,244,0,0.4)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background focus:ring-primary">
+<span class="material-symbols-outlined text-[18px] mr-sm">add</span>
+                    Upload sales CSV
+                </button>
+</div>
+</div>
+</main>
+<!-- Global Footer (From JSON) -->
+<footer class="bg-deep-obsidian text-on-surface font-label-sm text-label-sm w-full py-stack-lg border-t border-muted-grey flat no shadows transition-colors mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-[1100px] mx-auto w-full px-margin py-lg gap-md">
+<div class="font-label-md text-label-md text-stark-white flex flex-col sm:flex-row items-center gap-sm">
+<span class="font-headline-lg-mobile text-headline-lg-mobile tracking-tighter text-on-background">Forecastly</span>
+<span class="text-on-surface-variant hidden sm:inline">|</span>
+<span class="text-on-surface-variant font-label-caps text-label-caps">© 2024 Forecastly AI. All rights reserved.</span>
+</div>
+<nav class="flex flex-wrap justify-center gap-md">
+<a class="text-on-surface-variant hover:text-electric-lime hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-electric-lime hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-electric-lime hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Contact Support</a>
+</nav>
+</div>
+</footer>
+</body></html>

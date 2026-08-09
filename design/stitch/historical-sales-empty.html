@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Historical Sales - Forecastly</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "on-tertiary-fixed-variant": "#374956",
+                        "surface-container-high": "#222a3d",
+                        "tertiary-container": "#d2e5f5",
+                        "inverse-surface": "#dae2fd",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#abd600",
+                        "on-primary": "#283500",
+                        "on-primary-container": "#556d00",
+                        "primary-fixed": "#c3f400",
+                        "tertiary-fixed": "#d2e5f5",
+                        "on-primary-fixed": "#161e00",
+                        "secondary": "#bcc7de",
+                        "on-tertiary-container": "#556774",
+                        "on-tertiary": "#21323e",
+                        "tertiary-fixed-dim": "#b6c9d8",
+                        "secondary-container": "#3e495d",
+                        "tertiary": "#ffffff",
+                        "on-background": "#dae2fd",
+                        "outline": "#8e9379",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-tertiary-fixed": "#0b1d29",
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#2d3449",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "inverse-on-surface": "#283044",
+                        "surface-bright": "#31394d",
+                        "secondary-fixed": "#d8e3fb",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-secondary-container": "#aeb9d0",
+                        "error-container": "#93000a",
+                        "on-error": "#690005",
+                        "surface": "#0b1326",
+                        "surface-variant": "#2d3449",
+                        "surface-tint": "#abd600",
+                        "on-surface": "#dae2fd",
+                        "outline-variant": "#444933",
+                        "on-error-container": "#ffdad6",
+                        "inverse-primary": "#506600",
+                        "surface-container": "#171f33",
+                        "primary-container": "#c3f400",
+                        "background": "#0b1326",
+                        "primary": "#ffffff",
+                        "on-secondary": "#263143",
+                        "surface-dim": "#0b1326"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "base": "8px",
+                        "margin": "32px",
+                        "md": "24px",
+                        "lg": "48px",
+                        "xl": "80px",
+                        "sm": "12px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Geist"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "body-lg": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0B0F1A;
+            color: #dae2fd;
+        }
+        
+        .shadow-multi-layer {
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1), 0px 10px 15px rgba(0,0,0,0.2);
+        }
+        
+        .shadow-floating {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 15px rgba(195, 244, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex flex-col font-body-md text-body-md text-on-surface antialiased">
+<!-- Header Navigation -->
+<header class="w-full px-margin-desktop py-md md:py-margin max-w-[1100px] mx-auto flex items-center justify-between border-b border-surface-variant md:border-none z-10 sticky top-0 bg-background/90 backdrop-blur-md">
+<div class="flex items-center gap-md">
+<a class="text-on-surface-variant hover:text-primary-container transition-colors duration-200 flex items-center gap-base active:scale-95 transition-transform group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform" data-icon="arrow_back">arrow_back</span>
+<span class="font-body-md text-body-md hidden md:inline-block">Dashboard</span>
+</a>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface tracking-tight">Historical sales</h1>
+</div>
+<!-- Optional Actions (Hidden on Empty State usually, but kept for structural consistency) -->
+<div class="hidden md:flex items-center gap-base opacity-50 pointer-events-none">
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area - Centered Empty State -->
+<main class="flex-grow flex items-center justify-center p-margin-desktop">
+<div class="max-w-md w-full bg-[#1E293B] rounded-[24px] border border-[#334155] shadow-multi-layer p-xl flex flex-col items-center text-center relative overflow-hidden group">
+<!-- Decorative Ambient Glow -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-container/10 rounded-full blur-3xl pointer-events-none group-hover:bg-primary-container/20 transition-colors duration-700"></div>
+<div class="absolute -bottom-24 -left-24 w-48 h-48 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Icon Container -->
+<div class="w-24 h-24 rounded-full bg-surface-container-high border border-surface-variant flex items-center justify-center mb-lg relative z-10 shadow-multi-layer group-hover:-translate-y-2 transition-transform duration-300">
+<div class="absolute inset-0 rounded-full border border-primary-container/20 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500 pointer-events-none"></div>
+<span class="material-symbols-outlined text-[48px] text-on-surface-variant group-hover:text-primary-container transition-colors duration-300" data-icon="query_stats" data-weight="fill" style="font-variation-settings: 'FILL' 1;">query_stats</span>
+</div>
+<!-- Typography -->
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-md relative z-10">No sales data yet</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-xl relative z-10">Upload a sales CSV to see your historical trends and generate forecasts.</p>
+<!-- Action Area -->
+<div class="w-full relative z-10">
+<button class="w-full bg-primary-container text-on-primary-container hover:bg-primary-fixed font-body-md text-body-md rounded-full py-md px-lg flex items-center justify-center gap-sm transition-all duration-200 active:scale-95 glow-effect">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+<span class="font-semibold">Upload sales CSV</span>
+</button>
+<div class="mt-md text-center">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface transition-colors duration-200 inline-flex items-center gap-xs" href="#">
+<span class="material-symbols-outlined text-[16px]" data-icon="help">help</span>
+                        VIEW CSV TEMPLATE
+                    </a>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for button hover glow intensity
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                if(btn.classList.contains('glow-effect')) {
+                    const rect = btn.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    btn.style.setProperty('--x', `${x}px`);
+                    btn.style.setProperty('--y', `${y}px`);
+                }
+            });
+        });
+    </script>
+</body></html>

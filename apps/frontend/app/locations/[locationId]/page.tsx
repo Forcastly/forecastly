@@ -118,6 +118,12 @@ export default function LocationDashboardPage() {
             >
               Sales
             </Link>
+            <Link
+              href={`/locations/${locationId}/recipes`}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Recipes
+            </Link>
             <Button variant="outline" onClick={onGenerate} disabled={generate.isPending}>
               <RefreshCw className={generate.isPending ? "size-4 animate-spin" : "size-4"} />
               {generate.isPending ? "Generating…" : "Regenerate"}

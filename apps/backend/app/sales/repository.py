@@ -237,3 +237,15 @@ class SalesRepository:
             if revenue is not None and quantity:
                 prices[name] = Decimal(revenue) / Decimal(quantity)
         return prices
+
+    async def distinct_items(self, location_id: UUID) -> list[tuple[str, str]]:
+        """One (display name, normalized) pair per normalized item, using the
+        most recent display spelling. Drives the recipe menu-item picker."""
+        stmt = (
+            select(Sale.item_name, Sale.item_name_normalized)
+            .where(Sale.location_id == location_id)
+            .distinct(Sale.item_name_normalized)
+            .order_by(Sale.item_name_normalized, Sale.business_date.desc())
+        )
+        rows = (await self.session.execute(stmt)).all()
+        return [(name, normalized) for name, normalized in rows]

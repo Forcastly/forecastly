@@ -8,16 +8,20 @@ import {
 } from "@tanstack/react-query";
 
 import { useDevUser } from "@/lib/dev-user";
-import { ApiError, apiGet, apiPost, apiUpload, qs } from "./client";
+import { ApiError, apiDelete, apiGet, apiPost, apiPut, apiUpload, qs } from "./client";
 import type {
   Backtest,
   ForecastAccuracy,
   ModelEvaluationRun,
   PerItemEvaluation,
   GenerateForecast,
+  IngredientDemand,
+  IngredientList,
   LatestForecast,
   LocationItem,
   LocationList,
+  MenuItemList,
+  Recipe,
   Restaurant,
   RestaurantList,
   SalesDaily,
@@ -258,5 +262,84 @@ export function useModelEvaluationByItem(locationId: string, enabled: boolean) {
         `/api/locations/${locationId}/model-evaluations/by-item`,
       ),
     enabled,
+  });
+}
+
+export function useMenuItems(locationId: string) {
+  const scope = useScope();
+  return useQuery({
+    queryKey: [scope, "locations", locationId, "menu-items"],
+    queryFn: () => apiGet<MenuItemList>(`/api/locations/${locationId}/menu-items`),
+  });
+}
+
+export function useIngredients(locationId: string) {
+  const scope = useScope();
+  return useQuery({
+    queryKey: [scope, "locations", locationId, "ingredients"],
+    queryFn: () => apiGet<IngredientList>(`/api/locations/${locationId}/ingredients`),
+  });
+}
+
+export function useRecipe(locationId: string, itemNormalized: string | undefined) {
+  const scope = useScope();
+  return useQuery({
+    queryKey: [scope, "locations", locationId, "recipe", itemNormalized],
+    queryFn: async () => {
+      try {
+        return await apiGet<Recipe>(
+          `/api/locations/${locationId}/recipes/${encodeURIComponent(itemNormalized!)}`,
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return null;
+        throw err;
+      }
+    },
+    enabled: Boolean(itemNormalized),
+  });
+}
+
+type RecipeLinePayload = {
+  ingredient_id?: string;
+  ingredient_name?: string;
+  unit?: string;
+  amount: string;
+};
+
+export function useSaveRecipe(locationId: string) {
+  const scope = useScope();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { recipeId?: string; itemName: string; lines: RecipeLinePayload[] }) =>
+      input.recipeId
+        ? apiPut<Recipe>(`/api/locations/${locationId}/recipes/${encodeURIComponent(input.recipeId)}`, {
+            lines: input.lines,
+          })
+        : apiPost<Recipe>(`/api/locations/${locationId}/recipes`, {
+            item_name: input.itemName,
+            lines: input.lines,
+          }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [scope, "locations", locationId] }),
+  });
+}
+
+export function useDeleteRecipe(locationId: string) {
+  const scope = useScope();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (recipeId: string) =>
+      apiDelete<void>(`/api/locations/${locationId}/recipes/${encodeURIComponent(recipeId)}`),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [scope, "locations", locationId] }),
+  });
+}
+
+export function useIngredientDemand(locationId: string) {
+  const scope = useScope();
+  return useQuery({
+    queryKey: [scope, "locations", locationId, "ingredient-demand"],
+    queryFn: () =>
+      apiGet<IngredientDemand>(`/api/locations/${locationId}/ingredient-demand`),
   });
 }

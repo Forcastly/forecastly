@@ -1,0 +1,308 @@
+from __future__ import annotations
+
+from urllib.parse import quote
+
+from httpx import AsyncClient
+
+ALICE = {"X-Dev-Subject": "alice"}
+BOB = {"X-Dev-Subject": "bob"}
+
+
+async def _location(client: AsyncClient, headers: dict[str, str]) -> str:
+    restaurant = await client.post("/api/restaurants", json={"name": "R"}, headers=headers)
+    restaurant_id = restaurant.json()["id"]
+    location = await client.post(
+        f"/api/restaurants/{restaurant_id}/locations",
+        json={"name": "Downtown", "timezone": "America/New_York"},
+        headers=headers,
+    )
+    return location.json()["id"]
+
+
+async def test_create_recipe_with_inline_ingredients(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [
+                {"ingredient_name": "Bun", "unit": "ea", "amount": "1"},
+                {"ingredient_name": "Beef Patty", "unit": "lb", "amount": "0.25"},
+            ],
+        },
+        headers=ALICE,
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["item_name"] == "Cheeseburger"
+    assert body["item_name_normalized"] == "cheeseburger"
+    lines = {line["ingredient_name"]: line for line in body["lines"]}
+    assert lines["Bun"]["unit"] == "ea"
+    assert lines["Bun"]["amount"] == "1.0000"
+    assert lines["Beef Patty"]["amount"] == "0.2500"
+
+    fetched = await client.get(f"/api/locations/{location_id}/recipes/cheeseburger", headers=ALICE)
+    assert fetched.status_code == 200
+    assert len(fetched.json()["lines"]) == 2
+
+
+async def test_get_recipe_by_name_containing_slash_round_trips(client: AsyncClient) -> None:
+    # normalize_item_name does not strip "/", and the frontend percent-encodes
+    # it as %2F — the GET-by-name route must use a path converter so this
+    # still matches a single path parameter rather than 404ing.
+    location_id = await _location(client, ALICE)
+    item_name = "Fish / Chips"
+
+    created = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": item_name,
+            "lines": [{"ingredient_name": "Cod", "unit": "lb", "amount": "0.5"}],
+        },
+        headers=ALICE,
+    )
+    assert created.status_code == 201
+    normalized = created.json()["item_name_normalized"]
+    assert "/" in normalized
+
+    fetched = await client.get(
+        f"/api/locations/{location_id}/recipes/{quote(normalized, safe='')}",
+        headers=ALICE,
+    )
+    assert fetched.status_code == 200
+    assert fetched.json()["item_name"] == item_name
+
+
+async def test_menu_items_report_recipe_status(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    csv = b"date,item_name,quantity\n2026-08-01,Cheeseburger,10\n2026-08-01,Fries,20\n"
+    upload = await client.post(
+        f"/api/locations/{location_id}/sales/imports",
+        files={"file": ("s.csv", csv, "text/csv")},
+        headers=ALICE,
+    )
+    assert upload.status_code in (200, 201)
+    await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [{"ingredient_name": "Bun", "unit": "ea", "amount": "1"}],
+        },
+        headers=ALICE,
+    )
+
+    items = await client.get(f"/api/locations/{location_id}/menu-items", headers=ALICE)
+    assert items.status_code == 200
+    by_name = {i["item_name_normalized"]: i["has_recipe"] for i in items.json()["items"]}
+    assert by_name == {"cheeseburger": True, "fries": False}
+
+
+async def test_duplicate_recipe_conflicts(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    payload = {
+        "item_name": "Cheeseburger",
+        "lines": [{"ingredient_name": "Bun", "unit": "ea", "amount": "1"}],
+    }
+    first = await client.post(f"/api/locations/{location_id}/recipes", json=payload, headers=ALICE)
+    assert first.status_code == 201
+    second = await client.post(f"/api/locations/{location_id}/recipes", json=payload, headers=ALICE)
+    assert second.status_code == 409
+    assert second.json()["error"]["code"] == "duplicate_recipe"
+
+
+async def test_recipes_are_tenant_isolated(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [{"ingredient_name": "Bun", "unit": "ea", "amount": "1"}],
+        },
+        headers=ALICE,
+    )
+    # Bob cannot read Alice's recipes or menu items.
+    assert (
+        await client.get(f"/api/locations/{location_id}/menu-items", headers=BOB)
+    ).status_code == 404
+    assert (
+        await client.get(f"/api/locations/{location_id}/recipes/cheeseburger", headers=BOB)
+    ).status_code == 404
+
+
+async def test_line_referencing_unknown_ingredient_id_is_404(client: AsyncClient) -> None:
+    import uuid
+
+    location_id = await _location(client, ALICE)
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [{"ingredient_id": str(uuid.uuid4()), "amount": "1"}],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "ingredient_not_found"
+
+
+async def test_duplicate_ingredient_lines_are_rejected(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [
+                {"ingredient_name": "Bun", "unit": "ea", "amount": "1"},
+                # Same ingredient, different display spelling — normalizes the same.
+                {"ingredient_name": "  bun ", "unit": "ea", "amount": "2"},
+            ],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "validation_error"
+
+
+async def test_duplicate_ingredient_id_lines_are_rejected(client: AsyncClient) -> None:
+    import uuid
+
+    location_id = await _location(client, ALICE)
+    ingredient_id = str(uuid.uuid4())
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [
+                {"ingredient_id": ingredient_id, "amount": "1"},
+                {"ingredient_id": ingredient_id, "amount": "2"},
+            ],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 422  # covers the ingredient_id-duplicate branch
+
+
+async def test_cross_type_duplicate_ingredient_line_is_a_clean_conflict(
+    client: AsyncClient,
+) -> None:
+    location_id = await _location(client, ALICE)
+    first = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [{"ingredient_name": "Bun", "unit": "ea", "amount": "1"}],
+        },
+        headers=ALICE,
+    )
+    assert first.status_code == 201
+
+    ingredients = await client.get(f"/api/locations/{location_id}/ingredients", headers=ALICE)
+    assert ingredients.status_code == 200
+    bun = next(i for i in ingredients.json()["items"] if i["name"] == "Bun")
+
+    # Line A references the ingredient by id, line B by a name that resolves
+    # to that same ingredient — the schema validator can't see this collision
+    # (it's only visible after DB resolution), so it must be caught cleanly
+    # at the service level rather than surfacing as an unhandled 500.
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Fries",
+            "lines": [
+                {"ingredient_id": bun["id"], "amount": "1"},
+                {"ingredient_name": "Bun", "unit": "ea", "amount": "2"},
+            ],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "duplicate_recipe_line"
+
+
+async def _create_recipe(client: AsyncClient, location_id: str) -> dict:
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [{"ingredient_name": "Bun", "unit": "ea", "amount": "1"}],
+        },
+        headers=ALICE,
+    )
+    return response.json()
+
+
+async def test_update_recipe_replaces_lines(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    recipe = await _create_recipe(client, location_id)
+
+    updated = await client.put(
+        f"/api/locations/{location_id}/recipes/{recipe['id']}",
+        json={"lines": [
+            {"ingredient_name": "Bun", "unit": "ea", "amount": "2"},
+            {"ingredient_name": "Cheese", "unit": "slice", "amount": "2"},
+        ]},
+        headers=ALICE,
+    )
+    assert updated.status_code == 200
+    lines = {line["ingredient_name"]: line["amount"] for line in updated.json()["lines"]}
+    assert lines == {"Bun": "2.0000", "Cheese": "2.0000"}
+
+
+async def test_delete_recipe_keeps_ingredients(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    recipe = await _create_recipe(client, location_id)
+
+    deleted = await client.delete(
+        f"/api/locations/{location_id}/recipes/{recipe['id']}", headers=ALICE
+    )
+    assert deleted.status_code == 204
+
+    gone = await client.get(f"/api/locations/{location_id}/recipes/cheeseburger", headers=ALICE)
+    assert gone.status_code == 404
+
+    ingredients = await client.get(f"/api/locations/{location_id}/ingredients", headers=ALICE)
+    assert "Bun" in [i["name"] for i in ingredients.json()["items"]]
+
+
+async def test_update_and_delete_are_tenant_isolated(client: AsyncClient) -> None:
+    location_id = await _location(client, ALICE)
+    recipe = await _create_recipe(client, location_id)
+    put = await client.put(
+        f"/api/locations/{location_id}/recipes/{recipe['id']}",
+        json={"lines": [{"ingredient_name": "Bun", "unit": "ea", "amount": "1"}]},
+        headers=BOB,
+    )
+    assert put.status_code == 404
+    delete = await client.delete(
+        f"/api/locations/{location_id}/recipes/{recipe['id']}", headers=BOB
+    )
+    assert delete.status_code == 404
+
+
+async def test_update_recipe_with_cross_type_duplicate_lines_is_a_clean_conflict(
+    client: AsyncClient,
+) -> None:
+    location_id = await _location(client, ALICE)
+    recipe = await _create_recipe(client, location_id)
+
+    ingredients = await client.get(f"/api/locations/{location_id}/ingredients", headers=ALICE)
+    bun = next(i for i in ingredients.json()["items"] if i["name"] == "Bun")
+
+    # Line A references the ingredient by id, line B by a name that resolves
+    # to that same ingredient — only visible after DB resolution, so
+    # update_recipe must apply the same resolve-then-dedup guard as
+    # create_recipe rather than tripping the unique constraint at add_line.
+    response = await client.put(
+        f"/api/locations/{location_id}/recipes/{recipe['id']}",
+        json={
+            "lines": [
+                {"ingredient_id": bun["id"], "amount": "1"},
+                {"ingredient_name": "Bun", "unit": "ea", "amount": "2"},
+            ],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "duplicate_recipe_line"

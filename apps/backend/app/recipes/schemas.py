@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
@@ -102,3 +103,28 @@ class MenuItem(BaseModel):
 
 class MenuItemListResponse(BaseModel):
     items: list[MenuItem]
+
+
+class IngredientQuantitySchema(BaseModel):
+    ingredient_id: UUID
+    name: str
+    unit: str
+    quantity: Decimal
+
+
+class IngredientDemandDay(BaseModel):
+    date: date
+    ingredients: list[IngredientQuantitySchema]
+
+
+class IngredientDemandCoverage(BaseModel):
+    total_items: int
+    mapped_items: int
+    unmapped_items: list[str]
+
+
+class IngredientDemandResponse(BaseModel):
+    generated_at: str | None
+    per_day: list[IngredientDemandDay]
+    totals: list[IngredientQuantitySchema]
+    coverage: IngredientDemandCoverage

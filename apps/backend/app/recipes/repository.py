@@ -112,3 +112,7 @@ class RecipeRepository:
     async def delete_recipe(self, recipe: Recipe) -> None:
         await self.session.delete(recipe)
         await self.session.flush()
+
+    async def list_recipes_with_lines(self, location_id: UUID) -> list[Recipe]:
+        stmt = select(Recipe).where(Recipe.location_id == location_id)
+        return list(await self.session.scalars(stmt))

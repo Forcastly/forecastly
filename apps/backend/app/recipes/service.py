@@ -11,6 +11,7 @@ from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 
+from app.forecasts.models import ForecastRun
 from app.forecasts.repository import ForecastRepository
 from app.locations.service import LocationService
 from app.recipes.exceptions import (
@@ -18,6 +19,12 @@ from app.recipes.exceptions import (
     DuplicateRecipeLineError,
     IngredientNotFoundError,
     RecipeNotFoundError,
+)
+from app.recipes.explosion import (
+    ForecastPointInput,
+    IngredientDemand,
+    RecipeLine,
+    explode,
 )
 from app.recipes.models import Ingredient, Recipe
 from app.recipes.repository import RecipeRepository
@@ -195,3 +202,36 @@ class RecipeService:
             raise RecipeNotFoundError()
         await self.repository.delete_recipe(recipe)
         await self.session.commit()
+
+    async def ingredient_demand(
+        self, user: User, location_id: UUID
+    ) -> tuple[ForecastRun | None, IngredientDemand]:
+        location = await self.locations.get(user, location_id)
+        run = await self.forecasts.latest_run(location.id)
+        if run is None:
+            empty = explode([], {})
+            return None, empty
+
+        forecasts = await self.forecasts.list_forecasts_for_run(run.id)
+        points = [
+            ForecastPointInput(
+                forecast_date=f.forecast_date,
+                item_name=f.item_name,
+                item_name_normalized=f.item_name_normalized,
+                predicted_quantity=f.predicted_quantity,
+            )
+            for f in forecasts
+        ]
+        recipes_by_item = {
+            recipe.item_name_normalized: [
+                RecipeLine(
+                    ingredient_id=line.ingredient_id,
+                    ingredient_name=line.ingredient.name,
+                    unit=line.ingredient.unit,
+                    amount=line.amount,
+                )
+                for line in recipe.lines
+            ]
+            for recipe in await self.repository.list_recipes_with_lines(location.id)
+        }
+        return run, explode(points, recipes_by_item)

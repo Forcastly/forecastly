@@ -14,7 +14,11 @@ from app.locations.service import LocationService
 from app.recipes.models import Recipe
 from app.recipes.repository import RecipeRepository
 from app.recipes.schemas import (
+    IngredientDemandCoverage,
+    IngredientDemandDay,
+    IngredientDemandResponse,
     IngredientListResponse,
+    IngredientQuantitySchema,
     IngredientResponse,
     MenuItem,
     MenuItemListResponse,
@@ -147,3 +151,42 @@ async def delete_recipe(
 ) -> Response:
     await service.delete_recipe(user=user, location_id=location_id, recipe_id=recipe_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/locations/{location_id}/ingredient-demand",
+    response_model=IngredientDemandResponse,
+)
+async def ingredient_demand(
+    location_id: UUID, user: CurrentUser, service: RecipeServiceDep
+) -> IngredientDemandResponse:
+    run, demand = await service.ingredient_demand(user, location_id)
+    return IngredientDemandResponse(
+        generated_at=run.generated_at.isoformat() if run is not None else None,
+        per_day=[
+            IngredientDemandDay(
+                date=day.date,
+                ingredients=[
+                    IngredientQuantitySchema(
+                        ingredient_id=q.ingredient_id,
+                        name=q.name,
+                        unit=q.unit,
+                        quantity=q.quantity,
+                    )
+                    for q in day.ingredients
+                ],
+            )
+            for day in demand.per_day
+        ],
+        totals=[
+            IngredientQuantitySchema(
+                ingredient_id=q.ingredient_id, name=q.name, unit=q.unit, quantity=q.quantity
+            )
+            for q in demand.totals
+        ],
+        coverage=IngredientDemandCoverage(
+            total_items=demand.total_items,
+            mapped_items=demand.mapped_items,
+            unmapped_items=demand.unmapped_items,
+        ),
+    )

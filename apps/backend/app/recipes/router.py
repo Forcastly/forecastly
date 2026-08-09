@@ -89,7 +89,7 @@ async def list_ingredients(
 
 
 @router.get(
-    "/locations/{location_id}/recipes/{item_name_normalized}",
+    "/locations/{location_id}/recipes/{item_name_normalized:path}",
     response_model=RecipeResponse,
 )
 async def get_recipe(

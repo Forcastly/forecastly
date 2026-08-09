@@ -128,3 +128,25 @@ class IngredientDemandResponse(BaseModel):
     per_day: list[IngredientDemandDay]
     totals: list[IngredientQuantitySchema]
     coverage: IngredientDemandCoverage
+
+
+class PrepSheetItem(BaseModel):
+    item_name: str
+    predicted_quantity: Decimal
+
+
+class PrepSheetResponse(BaseModel):
+    """One day of the forecast, plus the ingredients it consumes.
+
+    ``date`` is the day actually served — the request may omit it, in which case
+    the service resolves the location's local today clamped into the forecast
+    horizon. All four date fields are null when the location has no forecast run.
+    """
+
+    date: date | None
+    generated_at: str | None
+    horizon_start: date | None
+    horizon_end: date | None
+    items: list[PrepSheetItem]
+    ingredients: list[IngredientQuantitySchema]
+    coverage: IngredientDemandCoverage

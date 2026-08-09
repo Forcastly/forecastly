@@ -41,9 +41,13 @@ class Settings(BaseSettings):
     # Maximum accepted sales-CSV upload size in bytes (default 5 MB).
     max_upload_bytes: int = 5 * 1024 * 1024
 
-    # Clerk (external auth provider). Optional until wired.
+    # Clerk (external auth provider). Setting CLERK_SECRET_KEY activates real
+    # token verification and disables the development auth fallback.
     clerk_secret_key: str | None = None
     clerk_publishable_key: str | None = None
+    # Optional allow-list of authorized parties (azp) accepted on session tokens
+    # — set to your frontend origins in production. JSON array or comma-separated.
+    clerk_authorized_parties: list[str] = Field(default_factory=list)
 
     # Development-only authentication fallback. Ignored in production.
     dev_auth_enabled: bool = True
@@ -54,7 +58,7 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.environment is Environment.production
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", "clerk_authorized_parties", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
         # Accept a comma-separated string in addition to a JSON array.

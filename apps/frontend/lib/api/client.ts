@@ -2,6 +2,23 @@ import { getDevSubject } from "@/lib/dev-user";
 import type { ApiErrorDetail } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const CLERK_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
+type ClerkWindow = {
+  Clerk?: { session?: { getToken: () => Promise<string | null> } };
+};
+
+/**
+ * Auth header for a request. With Clerk configured, sends the current session's
+ * bearer token; otherwise falls back to the dev-user subject header.
+ */
+async function authHeaders(): Promise<Record<string, string>> {
+  if (CLERK_ENABLED) {
+    const token = await (window as unknown as ClerkWindow).Clerk?.session?.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+  return { "X-Dev-Subject": getDevSubject() };
+}
 
 /** Error decoded from the backend's standard envelope: { error: { code, message, details? } }. */
 export class ApiError extends Error {
@@ -37,10 +54,11 @@ async function toApiError(res: Response): Promise<ApiError> {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const isForm = init.body instanceof FormData;
+  const auth = await authHeaders();
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
-      "X-Dev-Subject": getDevSubject(),
+      ...auth,
       ...(isForm ? {} : init.body ? { "Content-Type": "application/json" } : {}),
       ...init.headers,
     },

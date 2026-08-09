@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 from itertools import groupby
 from typing import Annotated
 from uuid import UUID
@@ -47,18 +48,29 @@ def get_forecast_service(session: SessionDep) -> ForecastService:
 ForecastServiceDep = Annotated[ForecastService, Depends(get_forecast_service)]
 
 
-def _group_by_day(forecasts: list[Forecast]) -> list[ForecastDay]:
+def _group_by_day(
+    forecasts: list[Forecast],
+    prices: dict[str, Decimal],
+) -> list[ForecastDay]:
     # forecasts arrive ordered by (forecast_date, item_name).
     days: list[ForecastDay] = []
     for forecast_date, group in groupby(forecasts, key=lambda f: f.forecast_date):
-        items = [
-            ForecastDayItem(
-                item_name=f.item_name,
-                predicted_quantity=f.predicted_quantity,
-                model_name=f.model_name,
+        items = []
+        for f in group:
+            price = prices.get(f.item_name_normalized)
+            estimated_revenue = (
+                (f.predicted_quantity * price).quantize(Decimal("0.01"))
+                if price is not None
+                else None
             )
-            for f in group
-        ]
+            items.append(
+                ForecastDayItem(
+                    item_name=f.item_name,
+                    predicted_quantity=f.predicted_quantity,
+                    estimated_revenue=estimated_revenue,
+                    model_name=f.model_name,
+                )
+            )
         days.append(ForecastDay(date=forecast_date, items=items))
     return days
 
@@ -90,9 +102,10 @@ async def latest_forecast(
     service: ForecastServiceDep,
 ) -> LatestForecastResponse:
     run, forecasts = await service.get_latest(user, location_id)
+    prices = await service.item_unit_prices(run.location_id)
     return LatestForecastResponse(
         run=ForecastRunSchema.model_validate(run),
-        days=_group_by_day(forecasts),
+        days=_group_by_day(forecasts, prices),
     )
 
 

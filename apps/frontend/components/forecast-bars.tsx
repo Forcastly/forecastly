@@ -12,17 +12,14 @@ import {
   YAxis,
 } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ForecastDay } from "@/lib/api/types";
-import { formatBusinessDate, toNumber } from "@/lib/format";
+import { formatBusinessDate, formatMoney, formatQty, toNumber } from "@/lib/format";
 
-// Cap the number of stacked series so the legend/colors stay readable; the rest
-// collapse into a single "Other" segment.
+export type Metric = "units" | "revenue";
+
+// Cap stacked series so the legend/colors stay readable; the rest collapse into
+// a single "Other" segment.
 const MAX_ITEMS = 8;
 
 // Brand-led: teal + amber first (matches the theme), then distinct hues.
@@ -38,19 +35,31 @@ const PALETTE = [
   "#64748b", // reserved for "Other"
 ];
 
-export function ForecastChart({ days }: { days: ForecastDay[] }) {
+/** Compact money axis label, e.g. "$1.2k" or "$450". */
+function compactMoney(value: number): string {
+  if (value >= 1000) return `$${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`;
+  return `$${Math.round(value)}`;
+}
+
+/**
+ * Stacked bars of the 7-day forecast — one stack per day, segmented by item.
+ * Honors the shared metric: predicted units or estimated revenue.
+ */
+export function ForecastBars({ days, metric }: { days: ForecastDay[]; metric: Metric }) {
   const { data, keys } = useMemo(() => {
-    // Rank items by total predicted quantity across the horizon.
+    const valueOf = (item: ForecastDay["items"][number]) =>
+      metric === "revenue"
+        ? (toNumber(item.estimated_revenue) ?? 0)
+        : Math.round(toNumber(item.predicted_quantity) ?? 0);
+
+    // Rank items by total across the horizon for the chosen metric.
     const totals = new Map<string, number>();
     for (const day of days) {
       for (const item of day.items) {
-        const qty = Math.round(toNumber(item.predicted_quantity) ?? 0);
-        totals.set(item.item_name, (totals.get(item.item_name) ?? 0) + qty);
+        totals.set(item.item_name, (totals.get(item.item_name) ?? 0) + valueOf(item));
       }
     }
-    const ranked = [...totals.keys()].sort(
-      (a, b) => (totals.get(b) ?? 0) - (totals.get(a) ?? 0),
-    );
+    const ranked = [...totals.keys()].sort((a, b) => (totals.get(b) ?? 0) - (totals.get(a) ?? 0));
     const top = ranked.slice(0, MAX_ITEMS);
     const hasOther = ranked.length > MAX_ITEMS;
     const topSet = new Set(top);
@@ -61,16 +70,12 @@ export function ForecastChart({ days }: { days: ForecastDay[] }) {
         label: formatBusinessDate(day.date),
       };
       for (const name of top) {
-        row[name] = Math.round(
-          toNumber(day.items.find((i) => i.item_name === name)?.predicted_quantity) ?? 0,
-        );
+        const item = day.items.find((i) => i.item_name === name);
+        row[name] = item ? valueOf(item) : 0;
       }
       if (hasOther) {
         row.Other = day.items.reduce(
-          (sum, item) =>
-            topSet.has(item.item_name)
-              ? sum
-              : sum + Math.round(toNumber(item.predicted_quantity) ?? 0),
+          (sum, item) => (topSet.has(item.item_name) ? sum : sum + valueOf(item)),
           0,
         );
       }
@@ -78,12 +83,16 @@ export function ForecastChart({ days }: { days: ForecastDay[] }) {
     });
 
     return { data, keys };
-  }, [days]);
+  }, [days, metric]);
+
+  const fmt = metric === "revenue" ? formatMoney : formatQty;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Predicted units by item</CardTitle>
+        <CardTitle className="text-sm">
+          Predicted {metric === "revenue" ? "revenue" : "units"} by item
+        </CardTitle>
       </CardHeader>
       <CardContent className="h-80">
         <ResponsiveContainer width="100%" height="100%">
@@ -92,11 +101,14 @@ export function ForecastChart({ days }: { days: ForecastDay[] }) {
             <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} />
             <YAxis
               fontSize={11}
-              width={40}
-              label={{ value: "Units", angle: -90, position: "insideLeft", fontSize: 11 }}
+              width={metric === "revenue" ? 52 : 40}
+              tickFormatter={(value) =>
+                metric === "revenue" ? compactMoney(Number(value)) : String(value)
+              }
             />
             <Tooltip
               cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+              formatter={(value) => fmt(Number(value))}
               contentStyle={{
                 borderRadius: 8,
                 border: "1px solid var(--border)",

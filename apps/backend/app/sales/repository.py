@@ -192,3 +192,48 @@ class SalesRepository:
 
         total_quantity, total_revenue, days_with_data = (await self.session.execute(stmt)).one()
         return int(total_quantity), total_revenue, int(days_with_data)
+
+    async def daily_totals(
+        self,
+        *,
+        location_id: UUID,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[tuple[date, int, Decimal | None]]:
+        """Per-day totals (quantity, revenue) summed across all items, oldest
+        first. Revenue is None for a day when no row that day recorded revenue —
+        missing revenue is not treated as zero.
+        """
+        stmt = select(
+            Sale.business_date,
+            func.coalesce(func.sum(Sale.quantity), 0),
+            func.sum(Sale.revenue),
+        ).where(Sale.location_id == location_id)
+        if start_date is not None:
+            stmt = stmt.where(Sale.business_date >= start_date)
+        if end_date is not None:
+            stmt = stmt.where(Sale.business_date <= end_date)
+        stmt = stmt.group_by(Sale.business_date).order_by(Sale.business_date.asc())
+
+        rows = (await self.session.execute(stmt)).all()
+        return [(day, int(quantity), revenue) for day, quantity, revenue in rows]
+
+    async def average_unit_prices(self, location_id: UUID) -> dict[str, Decimal]:
+        """Average unit price (sum revenue / sum quantity) per normalized item,
+        over the rows that recorded revenue. Used to turn predicted quantities
+        into estimated revenue. Items that never recorded revenue are omitted.
+        """
+        stmt = (
+            select(
+                Sale.item_name_normalized,
+                func.sum(Sale.revenue),
+                func.sum(Sale.quantity),
+            )
+            .where(Sale.location_id == location_id, Sale.revenue.is_not(None))
+            .group_by(Sale.item_name_normalized)
+        )
+        prices: dict[str, Decimal] = {}
+        for name, revenue, quantity in (await self.session.execute(stmt)).all():
+            if revenue is not None and quantity:
+                prices[name] = Decimal(revenue) / Decimal(quantity)
+        return prices

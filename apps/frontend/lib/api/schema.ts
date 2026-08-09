@@ -143,6 +143,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/locations/{location_id}/sales/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales Daily */
+        get: operations["sales_daily_api_locations__location_id__sales_daily_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/locations/{location_id}/forecasts": {
         parameters: {
             query?: never;
@@ -386,6 +403,8 @@ export interface components {
             item_name: string;
             /** Predicted Quantity */
             predicted_quantity: string;
+            /** Estimated Revenue */
+            estimated_revenue: string | null;
             /** Model Name */
             model_name: string;
         };
@@ -639,6 +658,23 @@ export interface components {
             quantity: number;
             /** Revenue */
             revenue: string | null;
+        };
+        /** SalesDailyPoint */
+        SalesDailyPoint: {
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /** Total Quantity */
+            total_quantity: number;
+            /** Total Revenue */
+            total_revenue: string | null;
+        };
+        /** SalesDailyResponse */
+        SalesDailyResponse: {
+            /** Items */
+            items: components["schemas"]["SalesDailyPoint"][];
         };
         /** SalesImportListItem */
         SalesImportListItem: {
@@ -1137,6 +1173,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalesSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sales_daily_api_locations__location_id__sales_daily_get: {
+        parameters: {
+            query?: {
+                start_date?: string | null;
+                end_date?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+                "x-dev-subject"?: string | null;
+            };
+            path: {
+                location_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDailyResponse"];
                 };
             };
             /** @description Validation Error */

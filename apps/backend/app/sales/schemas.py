@@ -82,3 +82,13 @@ class SalesSummaryResponse(BaseModel):
     total_quantity: int
     total_revenue: Decimal | None
     days_with_data: int
+
+
+class SalesDailyPoint(BaseModel):
+    business_date: date
+    total_quantity: int
+    total_revenue: Decimal | None
+
+
+class SalesDailyResponse(BaseModel):
+    items: list[SalesDailyPoint]

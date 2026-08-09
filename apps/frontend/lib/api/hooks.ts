@@ -22,6 +22,7 @@ import type {
   RestaurantList,
   SalesImport,
   SalesList,
+  SalesSummary,
   User,
 } from "./types";
 
@@ -108,6 +109,21 @@ export function useSalesInfinite(locationId: string, filters: SalesFilters = {})
         })}`,
       ),
     getNextPageParam: (last) => last.next_cursor,
+  });
+}
+
+/** Aggregate totals for the sales view's summary tiles. */
+export function useSalesSummary(locationId: string, filters: SalesFilters = {}) {
+  const scope = useScope();
+  return useQuery({
+    queryKey: [scope, "locations", locationId, "sales-summary", filters],
+    queryFn: () =>
+      apiGet<SalesSummary>(
+        `/api/locations/${locationId}/sales/summary${qs({
+          start_date: filters.startDate,
+          end_date: filters.endDate,
+        })}`,
+      ),
   });
 }
 

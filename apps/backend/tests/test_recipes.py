@@ -134,3 +134,59 @@ async def test_duplicate_ingredient_lines_are_rejected(client: AsyncClient) -> N
     )
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "validation_error"
+
+
+async def test_duplicate_ingredient_id_lines_are_rejected(client: AsyncClient) -> None:
+    import uuid
+
+    location_id = await _location(client, ALICE)
+    ingredient_id = str(uuid.uuid4())
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [
+                {"ingredient_id": ingredient_id, "amount": "1"},
+                {"ingredient_id": ingredient_id, "amount": "2"},
+            ],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 422  # covers the ingredient_id-duplicate branch
+
+
+async def test_cross_type_duplicate_ingredient_line_is_a_clean_conflict(
+    client: AsyncClient,
+) -> None:
+    location_id = await _location(client, ALICE)
+    first = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Cheeseburger",
+            "lines": [{"ingredient_name": "Bun", "unit": "ea", "amount": "1"}],
+        },
+        headers=ALICE,
+    )
+    assert first.status_code == 201
+
+    ingredients = await client.get(f"/api/locations/{location_id}/ingredients", headers=ALICE)
+    assert ingredients.status_code == 200
+    bun = next(i for i in ingredients.json()["items"] if i["name"] == "Bun")
+
+    # Line A references the ingredient by id, line B by a name that resolves
+    # to that same ingredient — the schema validator can't see this collision
+    # (it's only visible after DB resolution), so it must be caught cleanly
+    # at the service level rather than surfacing as an unhandled 500.
+    response = await client.post(
+        f"/api/locations/{location_id}/recipes",
+        json={
+            "item_name": "Fries",
+            "lines": [
+                {"ingredient_id": bun["id"], "amount": "1"},
+                {"ingredient_name": "Bun", "unit": "ea", "amount": "2"},
+            ],
+        },
+        headers=ALICE,
+    )
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "duplicate_recipe_line"

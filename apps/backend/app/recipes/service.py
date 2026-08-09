@@ -15,6 +15,7 @@ from app.forecasts.repository import ForecastRepository
 from app.locations.service import LocationService
 from app.recipes.exceptions import (
     DuplicateRecipeError,
+    DuplicateRecipeLineError,
     IngredientNotFoundError,
     RecipeNotFoundError,
 )
@@ -100,11 +101,28 @@ class RecipeService:
     ) -> Recipe:
         location = await self.locations.get(user, location_id)
         normalized = normalize_item_name(item_name)
-        # Only the recipe-row insert maps IntegrityError to "duplicate recipe" —
-        # that's the only constraint this violates. A duplicate ingredient
-        # reference within `lines` (recipe_ingredients' unique constraint) is
-        # rejected earlier, at the schema level, with a clear 422 instead of
-        # being funneled through this same misleading message.
+
+        # Resolve every line to a concrete ingredient before writing anything.
+        # Reject two lines that resolve to the same ingredient — whether by
+        # repeating an ingredient_id, or by two ingredient_names that only
+        # collide once normalized against the DB (a cross-type duplicate the
+        # schema validator can't see) — with a clean error here, rather than
+        # letting recipe_ingredients' unique constraint raise IntegrityError
+        # out of add_line with no handler around it.
+        resolved_ingredients: list[Ingredient] = []
+        seen_ingredient_ids: set[UUID] = set()
+        for line in lines:
+            ingredient = await self._resolve_ingredient(location.id, line)
+            if ingredient.id in seen_ingredient_ids:
+                raise DuplicateRecipeLineError()
+            seen_ingredient_ids.add(ingredient.id)
+            resolved_ingredients.append(ingredient)
+
+        # Only the recipe-row insert maps IntegrityError to "duplicate recipe"
+        # — that's the only constraint this statement can violate. Duplicate
+        # ingredient references within `lines` (both same-type and
+        # cross-type) are already rejected above with their own clean error,
+        # not funneled through this same-looking-but-wrong message.
         try:
             recipe = await self.repository.create_recipe(
                 location_id=location.id,
@@ -115,8 +133,7 @@ class RecipeService:
             await self.session.rollback()
             raise DuplicateRecipeError() from None
 
-        for line in lines:
-            ingredient = await self._resolve_ingredient(location.id, line)
+        for line, ingredient in zip(lines, resolved_ingredients, strict=True):
             await self.repository.add_line(
                 recipe_id=recipe.id,
                 ingredient_id=ingredient.id,

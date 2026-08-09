@@ -18,3 +18,8 @@ class IngredientNotFoundError(NotFoundError):
 class DuplicateRecipeError(ConflictError):
     code = "duplicate_recipe"
     message = "A recipe already exists for this menu item."
+
+
+class DuplicateRecipeLineError(ConflictError):
+    code = "duplicate_recipe_line"
+    message = "A recipe cannot list the same ingredient twice."

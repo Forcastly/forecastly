@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ForecastBars, type Metric } from "@/components/forecast-bars";
 import { ForecastGrid } from "@/components/forecast-grid";
 import { ForecastStats } from "@/components/forecast-stats";
+import { IngredientDemandGrid } from "@/components/ingredient-demand-grid";
 import { ModelComparisonCard } from "@/components/model-comparison-card";
 import { PerItemModelsCard } from "@/components/per-item-models-card";
 import { UploadDialog } from "@/components/upload-dialog";
@@ -149,6 +150,7 @@ export default function LocationDashboardPage() {
           <TabsList>
             <TabsTrigger value="forecast">Forecast</TabsTrigger>
             <TabsTrigger value="insights">Accuracy &amp; insights</TabsTrigger>
+            <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
           </TabsList>
 
           <TabsContent value="forecast" className="space-y-6 pt-2">
@@ -181,6 +183,15 @@ export default function LocationDashboardPage() {
             <AccuracyCard locationId={locationId} />
             <ModelComparisonCard locationId={locationId} />
             <PerItemModelsCard locationId={locationId} />
+          </TabsContent>
+
+          <TabsContent value="ingredients" className="space-y-6 pt-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-heading text-2xl font-semibold tracking-tight">
+                Ingredient demand
+              </h2>
+            </div>
+            <IngredientDemandGrid locationId={locationId} />
           </TabsContent>
         </Tabs>
       )}

@@ -92,3 +92,23 @@ class RecipeRepository:
             Recipe.location_id == location_id
         )
         return set(await self.session.scalars(stmt))
+
+    async def get_recipe(self, location_id: UUID, recipe_id: UUID) -> Recipe | None:
+        stmt = select(Recipe).where(
+            Recipe.location_id == location_id,
+            Recipe.id == recipe_id,
+        )
+        return await self.session.scalar(stmt)
+
+    async def delete_lines(self, recipe_id: UUID) -> None:
+        for line in list(
+            await self.session.scalars(
+                select(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe_id)
+            )
+        ):
+            await self.session.delete(line)
+        await self.session.flush()
+
+    async def delete_recipe(self, recipe: Recipe) -> None:
+        await self.session.delete(recipe)
+        await self.session.flush()

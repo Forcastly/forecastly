@@ -141,3 +141,57 @@ class RecipeService:
             )
         await self.session.commit()
         return await self.get_recipe(user, location.id, normalized)
+
+    async def update_recipe(
+        self,
+        *,
+        user: User,
+        location_id: UUID,
+        recipe_id: UUID,
+        lines: list[RecipeLineInput],
+    ) -> Recipe:
+        location = await self.locations.get(user, location_id)
+        recipe = await self.repository.get_recipe(location.id, recipe_id)
+        if recipe is None:
+            raise RecipeNotFoundError()
+
+        # Same resolve-then-dedup guard as create_recipe: resolve every line
+        # to a concrete ingredient before touching any rows, and reject a
+        # second line that resolves to an already-seen ingredient (same-type
+        # or cross-type) with a clean 409 — rather than deleting the old
+        # lines, then tripping the recipe_ingredients unique constraint at
+        # add_line and 500ing.
+        resolved_ingredients: list[Ingredient] = []
+        seen_ingredient_ids: set[UUID] = set()
+        for line in lines:
+            ingredient = await self._resolve_ingredient(location.id, line)
+            if ingredient.id in seen_ingredient_ids:
+                raise DuplicateRecipeLineError()
+            seen_ingredient_ids.add(ingredient.id)
+            resolved_ingredients.append(ingredient)
+
+        await self.repository.delete_lines(recipe.id)
+        for line, ingredient in zip(lines, resolved_ingredients, strict=True):
+            await self.repository.add_line(
+                recipe_id=recipe.id, ingredient_id=ingredient.id, amount=line.amount
+            )
+        await self.session.commit()
+        # `recipe.lines` was eager-loaded (selectin) by repository.get_recipe
+        # above, before delete_lines/add_line mutated the underlying rows
+        # directly (not through the relationship collection). With
+        # expire_on_commit=False, that in-memory collection is never
+        # invalidated by the commit, and a later query for the same identity
+        # does not re-populate an already-loaded relationship. Expire it here
+        # so the get_recipe() call below fetches lines fresh from the DB.
+        self.session.expire(recipe, ["lines"])
+        return await self.get_recipe(user, location.id, recipe.item_name_normalized)
+
+    async def delete_recipe(
+        self, *, user: User, location_id: UUID, recipe_id: UUID
+    ) -> None:
+        location = await self.locations.get(user, location_id)
+        recipe = await self.repository.get_recipe(location.id, recipe_id)
+        if recipe is None:
+            raise RecipeNotFoundError()
+        await self.repository.delete_recipe(recipe)
+        await self.session.commit()

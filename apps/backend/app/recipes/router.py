@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 
 from app.core.dependencies import SessionDep
 from app.forecasts.repository import ForecastRepository
@@ -21,6 +21,7 @@ from app.recipes.schemas import (
     RecipeCreate,
     RecipeLineResponse,
     RecipeResponse,
+    RecipeUpdate,
 )
 from app.recipes.service import RecipeService
 from app.restaurants.repository import RestaurantRepository
@@ -115,3 +116,34 @@ async def create_recipe(
         lines=body.lines,
     )
     return _recipe_response(recipe)
+
+
+@router.put(
+    "/locations/{location_id}/recipes/{recipe_id}",
+    response_model=RecipeResponse,
+)
+async def update_recipe(
+    location_id: UUID,
+    recipe_id: UUID,
+    body: RecipeUpdate,
+    user: CurrentUser,
+    service: RecipeServiceDep,
+) -> RecipeResponse:
+    recipe = await service.update_recipe(
+        user=user, location_id=location_id, recipe_id=recipe_id, lines=body.lines
+    )
+    return _recipe_response(recipe)
+
+
+@router.delete(
+    "/locations/{location_id}/recipes/{recipe_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_recipe(
+    location_id: UUID,
+    recipe_id: UUID,
+    user: CurrentUser,
+    service: RecipeServiceDep,
+) -> Response:
+    await service.delete_recipe(user=user, location_id=location_id, recipe_id=recipe_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

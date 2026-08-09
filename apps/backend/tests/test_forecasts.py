@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+from decimal import Decimal
 
 from httpx import AsyncClient
 
@@ -126,6 +127,35 @@ async def test_latest_forecast(client: AsyncClient) -> None:
     assert len(body["days"]) == 7
     assert body["days"][0]["items"][0]["item_name"] == "Cheeseburger"
     assert body["days"][0]["items"][0]["model_name"]
+
+
+async def test_latest_forecast_includes_estimated_revenue(client: AsyncClient) -> None:
+    location_id = await _make_location(client)
+    today = date.today().isoformat()
+    # Average unit price = 250.00 / 50 = 5.00; estimated revenue = predicted × price.
+    await _upload(client, location_id, _csv(f"{today},Cheeseburger,50,250.00"))
+
+    body = (
+        await client.get(f"/api/locations/{location_id}/forecasts/latest", headers=ALICE)
+    ).json()
+
+    item = body["days"][0]["items"][0]
+    assert item["item_name"] == "Cheeseburger"
+    predicted = Decimal(item["predicted_quantity"])
+    expected = (predicted * Decimal("5")).quantize(Decimal("0.01"))
+    assert Decimal(item["estimated_revenue"]) == expected
+
+
+async def test_latest_forecast_estimated_revenue_null_without_revenue(client: AsyncClient) -> None:
+    location_id = await _make_location(client)
+    today = date.today().isoformat()
+    await _upload(client, location_id, _csv(f"{today},Cheeseburger,50,"))  # no revenue
+
+    body = (
+        await client.get(f"/api/locations/{location_id}/forecasts/latest", headers=ALICE)
+    ).json()
+
+    assert body["days"][0]["items"][0]["estimated_revenue"] is None
 
 
 async def test_latest_forecast_none_is_404(client: AsyncClient) -> None:

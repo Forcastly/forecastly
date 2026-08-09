@@ -172,6 +172,14 @@ class ForecastService:
         forecasts = await self.repository.list_forecasts_for_run(run.id)
         return run, forecasts
 
+    async def item_unit_prices(self, location_id: UUID) -> dict[str, Decimal]:
+        """Trailing average unit price per normalized item, keyed for turning
+        predicted quantities into estimated revenue. A presentation concern kept
+        out of the engine — items without recorded revenue are omitted. Callers
+        must have already authorized access to ``location_id``.
+        """
+        return await self.sales.average_unit_prices(location_id)
+
     async def list_runs(
         self,
         *,

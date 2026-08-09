@@ -38,6 +38,9 @@ class GenerateForecastResponse(BaseModel):
 class ForecastDayItem(BaseModel):
     item_name: str
     predicted_quantity: Decimal
+    # Estimated revenue = predicted_quantity × trailing average unit price from
+    # actual sales. None when the item has no recorded revenue history.
+    estimated_revenue: Decimal | None
     model_name: str
 
 

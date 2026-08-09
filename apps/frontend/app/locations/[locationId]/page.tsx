@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, LineChart, RefreshCw } from "lucide-react";
@@ -8,9 +9,9 @@ import { toast } from "sonner";
 import { AccuracyCard } from "@/components/accuracy-card";
 import { BacktestCard } from "@/components/backtest-card";
 import { EmptyState } from "@/components/empty-state";
-import { ForecastChart } from "@/components/forecast-chart";
-import { ForecastDayCards } from "@/components/forecast-day-cards";
-import { HistoryForecastChart } from "@/components/history-forecast-chart";
+import { ForecastBars, type Metric } from "@/components/forecast-bars";
+import { ForecastGrid } from "@/components/forecast-grid";
+import { ForecastStats } from "@/components/forecast-stats";
 import { ModelComparisonCard } from "@/components/model-comparison-card";
 import { PerItemModelsCard } from "@/components/per-item-models-card";
 import { UploadDialog } from "@/components/upload-dialog";
@@ -19,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError } from "@/lib/api/client";
 import { useGenerateForecast, useLatestForecast, useLocation } from "@/lib/api/hooks";
+import { cn } from "@/lib/utils";
 
 /** Compact relative time, e.g. "3h ago". */
 function timeAgo(iso: string): string {
@@ -31,11 +33,52 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+/** Units ⁄ Revenue segmented toggle shared by the timeline and the grid. */
+function MetricToggle({
+  value,
+  onChange,
+}: {
+  value: Metric;
+  onChange: (metric: Metric) => void;
+}) {
+  const options: { key: Metric; label: string }[] = [
+    { key: "units", label: "Units" },
+    { key: "revenue", label: "Revenue" },
+  ];
+  return (
+    <div className="inline-flex rounded-lg border p-0.5">
+      {options.map((option) => (
+        <button
+          key={option.key}
+          type="button"
+          onClick={() => onChange(option.key)}
+          className={cn(
+            "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+            value === option.key
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function LocationDashboardPage() {
   const { locationId } = useParams<{ locationId: string }>();
   const location = useLocation(locationId);
   const latest = useLatestForecast(locationId);
   const generate = useGenerateForecast(locationId);
+  const [metric, setMetric] = useState<Metric>("units");
+
+  // Revenue is optional in the CSV; only offer the toggle when the forecast has
+  // any estimated revenue (i.e. some item had recorded revenue history).
+  const hasRevenue = Boolean(
+    latest.data?.days.some((day) => day.items.some((i) => i.estimated_revenue != null)),
+  );
+  const activeMetric: Metric = hasRevenue ? metric : "units";
 
   async function onGenerate() {
     try {
@@ -103,20 +146,25 @@ export default function LocationDashboardPage() {
           </TabsList>
 
           <TabsContent value="forecast" className="space-y-6 pt-2">
-            <div className="flex items-end justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-heading text-2xl font-semibold tracking-tight">
                 Next 7 days
               </h2>
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />
-                <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-                  Generated {timeAgo(latest.data.run.generated_at)}
-                </span>
+              <div className="flex items-center gap-3">
+                {hasRevenue ? (
+                  <MetricToggle value={activeMetric} onChange={setMetric} />
+                ) : null}
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />
+                  <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+                    Generated {timeAgo(latest.data.run.generated_at)}
+                  </span>
+                </div>
               </div>
             </div>
-            <ForecastChart days={latest.data.days} />
-            <ForecastDayCards days={latest.data.days} />
-            <HistoryForecastChart locationId={locationId} latest={latest.data} />
+            <ForecastStats days={latest.data.days} />
+            <ForecastBars days={latest.data.days} metric={activeMetric} />
+            <ForecastGrid days={latest.data.days} metric={activeMetric} />
           </TabsContent>
 
           <TabsContent value="insights" className="space-y-6 pt-2">

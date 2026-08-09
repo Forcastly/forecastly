@@ -201,3 +201,16 @@ class SalesService:
         return await self.sales.summary(
             location_id=location.id, start_date=start_date, end_date=end_date
         )
+
+    async def daily_totals(
+        self,
+        *,
+        user: User,
+        location_id: UUID,
+        start_date: date | None,
+        end_date: date | None,
+    ) -> list[tuple[date, int, Decimal | None]]:
+        location = await self.locations.get(user, location_id)
+        return await self.sales.daily_totals(
+            location_id=location.id, start_date=start_date, end_date=end_date
+        )

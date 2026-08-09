@@ -18,6 +18,8 @@ from app.sales.exceptions import SalesFileTooLargeError, UnsupportedSalesFileErr
 from app.sales.repository import SalesImportRepository, SalesRepository
 from app.sales.schemas import (
     SaleResponse,
+    SalesDailyPoint,
+    SalesDailyResponse,
     SalesImportListItem,
     SalesImportListResponse,
     SalesImportResponse,
@@ -135,4 +137,29 @@ async def sales_summary(
         total_quantity=total_quantity,
         total_revenue=total_revenue,
         days_with_data=days_with_data,
+    )
+
+
+@router.get(
+    "/locations/{location_id}/sales/daily",
+    response_model=SalesDailyResponse,
+)
+async def sales_daily(
+    location_id: UUID,
+    user: CurrentUser,
+    service: SalesServiceDep,
+    start_date: Annotated[date | None, Query()] = None,
+    end_date: Annotated[date | None, Query()] = None,
+) -> SalesDailyResponse:
+    rows = await service.daily_totals(
+        user=user,
+        location_id=location_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    return SalesDailyResponse(
+        items=[
+            SalesDailyPoint(business_date=bd, total_quantity=qty, total_revenue=rev)
+            for bd, qty, rev in rows
+        ]
     )

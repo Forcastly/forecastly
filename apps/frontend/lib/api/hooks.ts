@@ -20,6 +20,7 @@ import type {
   LocationList,
   Restaurant,
   RestaurantList,
+  SalesDaily,
   SalesImport,
   SalesList,
   SalesSummary,
@@ -120,6 +121,24 @@ export function useSalesSummary(locationId: string, filters: SalesFilters = {}) 
     queryFn: () =>
       apiGet<SalesSummary>(
         `/api/locations/${locationId}/sales/summary${qs({
+          start_date: filters.startDate,
+          end_date: filters.endDate,
+        })}`,
+      ),
+  });
+}
+
+/** Per-day sales totals (all items) for the forecast timeline's actual half. */
+export function useDailySales(
+  locationId: string,
+  filters: { startDate?: string; endDate?: string } = {},
+) {
+  const scope = useScope();
+  return useQuery({
+    queryKey: [scope, "locations", locationId, "sales-daily", filters],
+    queryFn: () =>
+      apiGet<SalesDaily>(
+        `/api/locations/${locationId}/sales/daily${qs({
           start_date: filters.startDate,
           end_date: filters.endDate,
         })}`,

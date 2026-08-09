@@ -247,3 +247,71 @@ async def test_list_sales_invalid_cursor_is_422(client: AsyncClient) -> None:
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "invalid_cursor"
+
+
+# --- daily totals ---------------------------------------------------------
+
+
+async def test_sales_daily_totals(client: AsyncClient) -> None:
+    location_id = await _make_location(client)
+    await _upload(
+        client,
+        location_id,
+        _csv(
+            "2026-08-01,Cheeseburger,48,576.00",
+            "2026-08-01,Fries,72,288.00",
+            "2026-08-02,Cheeseburger,50,600.00",
+        ),
+    )
+
+    response = await client.get(f"/api/locations/{location_id}/sales/daily", headers=ALICE)
+
+    assert response.status_code == 200
+    items = response.json()["items"]
+    # Aggregated per business date across items, oldest first.
+    assert [i["business_date"] for i in items] == ["2026-08-01", "2026-08-02"]
+    assert items[0]["total_quantity"] == 120  # 48 + 72
+    assert float(items[0]["total_revenue"]) == 864.0  # 576 + 288
+    assert items[1]["total_quantity"] == 50
+    assert float(items[1]["total_revenue"]) == 600.0
+
+
+async def test_sales_daily_revenue_null_when_unrecorded(client: AsyncClient) -> None:
+    location_id = await _make_location(client)
+    await _upload(client, location_id, _csv("2026-08-01,Wings,10,"))
+
+    items = (
+        await client.get(f"/api/locations/{location_id}/sales/daily", headers=ALICE)
+    ).json()["items"]
+
+    assert items[0]["total_quantity"] == 10
+    assert items[0]["total_revenue"] is None  # missing revenue is unknown, not zero
+
+
+async def test_sales_daily_filters_by_date(client: AsyncClient) -> None:
+    location_id = await _make_location(client)
+    await _upload(
+        client,
+        location_id,
+        _csv("2026-08-01,Fries,10,", "2026-08-02,Fries,20,", "2026-08-03,Fries,30,"),
+    )
+
+    items = (
+        await client.get(
+            f"/api/locations/{location_id}/sales/daily",
+            params={"start_date": "2026-08-02", "end_date": "2026-08-02"},
+            headers=ALICE,
+        )
+    ).json()["items"]
+
+    assert [i["business_date"] for i in items] == ["2026-08-02"]
+    assert items[0]["total_quantity"] == 20
+
+
+async def test_sales_daily_tenant_isolation(client: AsyncClient) -> None:
+    location_id = await _make_location(client)  # Alice's
+    await _upload(client, location_id, _csv("2026-08-01,Fries,10,"))
+
+    response = await client.get(f"/api/locations/{location_id}/sales/daily", headers=BOB)
+
+    assert response.status_code == 404  # Bob cannot read Alice's location
